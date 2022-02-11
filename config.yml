@@ -1,0 +1,4 @@
+token: '' # Selfbot token, should work with a normal bot too, just use the official discord.py library
+submissionChannel: '' # Channel ID where submissions will be posted
+sendingDelay: '' # Delay in minutes between each submission being posted into the sending channel
+toSendChannel: '' # Channel ID where submissions will be posted after a delay between a previous submission, this is to prevent spam
