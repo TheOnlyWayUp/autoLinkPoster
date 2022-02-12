@@ -1,11 +1,12 @@
 """"Program to check for messages in a channel containing a URL and Description, adding that to a database and periodically sending one of those cool links to the #cool links channel on the r/discord_bots discord server."""
 
-# pylint: disable=invalid-name, wrong-import-order, multiple-imports, no-member
+# pylint: disable=invalid-name, wrong-import-order, multiple-imports, no-member, line-too-long
 
 import discord, aiosqlite, yaml, re, discord_colorize, datetime
 from typing import List, Dict
 from discord.ext import commands, tasks
 from rich.console import Console
+
 
 # --- Constants --- #
 
@@ -16,7 +17,9 @@ bot.console = Console()
 bot.urlRegex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 bot.titleRegex = r"(?<=Title:)(.*)(?=\n)"
 bot.descriptionRegex = r"(?<=Desc:)(.*)(?=\n)"
-with open("config.yml", "r", encoding="utf-8") as configFile:
+with open(
+    "config.yml", "r", encoding="utf-8"
+) as configFile:  # NOTE: Convert testingConfig.yml to config.yml before pushing.
     config = yaml.safe_load(configFile)
 configCopy = config.copy()
 for key, value in configCopy.items():
@@ -25,10 +28,11 @@ for key, value in configCopy.items():
             config[key] = int(value)
         except ValueError:
             pass
+del configCopy
 bot.config = config
 
-# --- Functions --- #
 
+# --- Functions --- #
 
 async def readyDatabase() -> bool:
     """Checks if the database is ready to be used. Else creates a database - username: str, id: int, title: str, description: str, url: str, date_added: str, sent: bool
@@ -76,11 +80,10 @@ def returnInfo(string: str) -> Dict[str, str]:
     """
     title = re.findall(bot.titleRegex, string)
     description = re.findall(bot.descriptionRegex, string)
-    return {"title": title[0], "description": description[0]}
+    return {"title": title[0].strip(), "description": description[0].strip()}
 
 
 # --- Events --- #
-
 
 @bot.event
 async def on_ready() -> None:
@@ -88,7 +91,6 @@ async def on_ready() -> None:
     bot.console.log(
         f"Logged in [green]successfully[/green] as [blue]{bot.user}[/blue]."
     )
-    # await returnConfig()
     bot.console.log("The config file was loaded [green]successfully[/green].")
     await readyDatabase()
     bot.console.log("The database was loaded [green]successfully[/green].")
@@ -105,7 +107,6 @@ async def on_message(message: discord.Message) -> None:
         return
     if message.author.id == bot.user.id:
         return
-    # example - {bot.colors.colorize('Hello World!', fg='green', bg='indigo', bold=True, underline=True)}
     replyMessage = await message.reply(
         f"Thank you for your contribution.\n\n```ansi\n{bot.colors.colorize('STATUS:', fg='green', bold=True)} {bot.colors.colorize('Processing...', fg='yellow', underline=True)}\n```"
     )
@@ -130,7 +131,7 @@ async def on_message(message: discord.Message) -> None:
     description = info["description"]
     url = links[0]
     del links, info
-    depthString = "\n\nTitle: {}\nDesc: {}\nURL: {}".format(title, description, url)
+    depthString = f"\n\nTitle: {title}\nDesc: {description}\nURL: {url}"  # .format(title, description, url)
     await replyMessage.edit(
         content=f"```ansi\n{bot.colors.colorize('STATUS:', fg='green', bold=True)} {bot.colors.colorize(f'Processing...{depthString}', fg='yellow', underline=True)}\n```"
     )
@@ -155,7 +156,6 @@ async def on_message(message: discord.Message) -> None:
 
 # --- Tasks --- #
 
-
 @tasks.loop(minutes=bot.config["sendingDelay"])
 async def sendLinks() -> None:
     """
@@ -169,16 +169,15 @@ async def sendLinks() -> None:
         if link is None:
             bot.console.log("No links to send.")
             return
-        channel = bot.get_channel(bot.config["suggestionChannel"])
-        author = link[1]
-        authorId = link[2]
-        title = link[3]
-        description = link[4]
-        url = link[5]
-        date = link[6]
-        date = date.strftime("%Y-%m-%d %H:%M:%S")
+        channel = bot.get_channel(bot.config["toSendChannel"])
+        author = link[0]
+        authorId = link[1]
+        title = link[2]
+        description = link[3]
+        url = link[4]
+        date = link[5]
 
-        toSend = f"""```ansi\n{bot.colors.colorize('Cool Link: ', fg='green', bold=True)} {bot.colors.colorize(title, fg='yellow', underline=True)}```\n{description}\nURL: {url}\nOther Information: {author} (<@{authorId})>), {date}."""
+        toSend = f"""```ansi\n{bot.colors.colorize('Cool Link:', fg='green', bold=True)} {bot.colors.colorize(title, fg='yellow', underline=True)}```\n{description}\n\nURL: {url}\nSent by {author} (<@{authorId}>) on {date}."""
         await channel.send(toSend)
 
         await db.execute("""UPDATE links SET sent = 1 WHERE id = ?""", (link[1],))
@@ -186,7 +185,15 @@ async def sendLinks() -> None:
         bot.console.log(f"Sent link {url}.")
 
 
+@sendLinks.before_loop
+async def before_sendLinks() -> None:
+    """Task that sends links from the database to the submission channel."""
+    await bot.wait_until_ready()
+    bot.console.log("[green]Starting[/green] the sendLinks task.")
+
+
 # --- Running --- #
 
 if __name__ == "__main__":
+    sendLinks.start()
     bot.run(bot.config["token"])
