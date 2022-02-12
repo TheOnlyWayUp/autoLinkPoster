@@ -44,8 +44,8 @@ if TYPE_CHECKING:
 MISSING = utils.MISSING
 
 __all__ = (
-    'Team',
-    'TeamMember',
+    "Team",
+    "TeamMember",
 )
 
 
@@ -69,37 +69,41 @@ class Team:
         owner_id: int
         members: List[TeamMember]
 
-    __slots__ = ('_state', 'id', 'name', '_icon', 'owner_id', 'members')
+    __slots__ = ("_state", "id", "name", "_icon", "owner_id", "members")
 
     def __init__(self, state: ConnectionState, data: TeamPayload):
         self._state: ConnectionState = state
         self._update(data)
 
     def _update(self, data: TeamPayload):
-        self.id: int = int(data['id'])
-        self.name: str = data['name']
-        self._icon: Optional[str] = data['icon']
-        self.owner_id = owner_id = int(data['owner_user_id'])
-        self.members = members = [TeamMember(self, self._state, member) for member in data.get('members', [])]
-        if owner_id not in members and owner_id == self._state.self_id:  # Discord moment
+        self.id: int = int(data["id"])
+        self.name: str = data["name"]
+        self._icon: Optional[str] = data["icon"]
+        self.owner_id = owner_id = int(data["owner_user_id"])
+        self.members = members = [
+            TeamMember(self, self._state, member) for member in data.get("members", [])
+        ]
+        if (
+            owner_id not in members and owner_id == self._state.self_id
+        ):  # Discord moment
             user: UserPayload = self._state.user._to_minimal_user_json()  # type: ignore
             member: TeamMemberPayload = {
-                'user': user,
-                'team_id': self.id,
-                'membership_state': 2,
-                'permissions': ['*'],
+                "user": user,
+                "team_id": self.id,
+                "membership_state": 2,
+                "permissions": ["*"],
             }
             members.append(TeamMember(self, self._state, member))
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} id={self.id} name={self.name}>'
+        return f"<{self.__class__.__name__} id={self.id} name={self.name}>"
 
     @property
     def icon(self) -> Optional[Asset]:
         """Optional[:class:`.Asset`]: Retrieves the team's icon asset, if any."""
         if self._icon is None:
             return None
-        return Asset._from_icon(self._state, self.id, self._icon, path='team')
+        return Asset._from_icon(self._state, self.id, self._icon, path="team")
 
     @property
     def owner(self) -> Optional[TeamMember]:
@@ -135,14 +139,14 @@ class Team:
         """
         payload = {}
         if name is not MISSING:
-            payload['name'] = name
+            payload["name"] = name
         if icon is not MISSING:
             if icon is not None:
-                payload['icon'] = utils._bytes_to_base64_data(icon)
+                payload["icon"] = utils._bytes_to_base64_data(icon)
             else:
-                payload['icon'] = ''
+                payload["icon"] = ""
         if owner is not MISSING:
-            payload['owner_user_id'] = owner.id
+            payload["owner_user_id"] = owner.id
         await self._state.http.edit_team(self.id, payload)
 
         await self._state.http.edit_team(self.id, payload)
@@ -179,7 +183,9 @@ class Team:
         ...
 
     @overload
-    async def invite_member(self, username: str, discriminator: Union[int, str]) -> TeamMember:
+    async def invite_member(
+        self, username: str, discriminator: Union[int, str]
+    ) -> TeamMember:
         ...
 
     async def invite_member(self, *args: Union[BaseUser, int, str]) -> TeamMember:
@@ -229,11 +235,13 @@ class Team:
             user = args[0]
             if isinstance(user, BaseUser):
                 user = str(user)
-            username, discrim = user.split('#')  # type: ignore
+            username, discrim = user.split("#")  # type: ignore
         elif len(args) == 2:
             username, discrim = args  # type: ignore
         else:
-            raise TypeError(f'invite_member() takes 1 or 2 arguments but {len(args)} were given')
+            raise TypeError(
+                f"invite_member() takes 1 or 2 arguments but {len(args)} were given"
+            )
 
         state = self._state
         data = await state.http.invite_team_member(self.id, username, discrim)
@@ -273,18 +281,20 @@ class TeamMember(BaseUser):
         The membership state of the member (i.e. invited or accepted)
     """
 
-    __slots__ = ('team', 'membership_state', 'permissions')
+    __slots__ = ("team", "membership_state", "permissions")
 
     def __init__(self, team: Team, state: ConnectionState, data: TeamMemberPayload):
         self.team: Team = team
-        self.membership_state: TeamMembershipState = try_enum(TeamMembershipState, data['membership_state'])
-        self.permissions: List[str] = data['permissions']
-        super().__init__(state=state, data=data['user'])
+        self.membership_state: TeamMembershipState = try_enum(
+            TeamMembershipState, data["membership_state"]
+        )
+        self.permissions: List[str] = data["permissions"]
+        super().__init__(state=state, data=data["user"])
 
     def __repr__(self) -> str:
         return (
-            f'<{self.__class__.__name__} id={self.id} name={self.name!r} '
-            f'discriminator={self.discriminator!r} membership_state={self.membership_state!r}>'
+            f"<{self.__class__.__name__} id={self.id} name={self.name!r} "
+            f"discriminator={self.discriminator!r} membership_state={self.membership_state!r}>"
         )
 
     async def remove(self) -> None:

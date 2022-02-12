@@ -30,6 +30,7 @@ from .user import User
 from .team import Team
 from .snowflake import Snowflake
 
+
 class BaseAppInfo(TypedDict):
     id: Snowflake
     name: str
@@ -37,6 +38,7 @@ class BaseAppInfo(TypedDict):
     icon: Optional[str]
     summary: str
     description: str
+
 
 class _AppInfoOptional(TypedDict, total=False):
     team: Team
@@ -47,6 +49,7 @@ class _AppInfoOptional(TypedDict, total=False):
     privacy_policy_url: str
     hook: bool
     max_participants: int
+
 
 class AppInfo(BaseAppInfo, _AppInfoOptional):
     rpc_origins: List[str]
@@ -59,6 +62,7 @@ class AppInfo(BaseAppInfo, _AppInfoOptional):
     rpc_application_state: int
     interactions_endpoint_url: str
 
+
 class _PartialAppInfoOptional(TypedDict, total=False):
     rpc_origins: List[str]
     cover_image: str
@@ -67,6 +71,7 @@ class _PartialAppInfoOptional(TypedDict, total=False):
     privacy_policy_url: str
     max_participants: int
     flags: int
+
 
 class PartialAppInfo(_PartialAppInfoOptional, BaseAppInfo):
     pass

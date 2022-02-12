@@ -50,15 +50,15 @@ class PartialConnection:
         Whether the connection is visible on the user's profile.
     """
 
-    __slots__ = ('id', 'name', 'type', 'verified', 'revoked', 'visible')
+    __slots__ = ("id", "name", "type", "verified", "revoked", "visible")
 
     def __init__(self, data):
-        self.id: str = data['id']
-        self.name: str = data['name']
-        self.type: str = data['type']
+        self.id: str = data["id"]
+        self.name: str = data["name"]
+        self.type: str = data["type"]
 
-        self.verified: bool = data['verified']
-        self.revoked: bool = data.get('revoked', False)
+        self.verified: bool = data["verified"]
+        self.revoked: bool = data.get("revoked", False)
         self.visible: bool = True
 
 
@@ -87,16 +87,16 @@ class Connection(PartialConnection):
         The OAuth2 access token for the account, if applicable.
     """
 
-    __slots__ = ('_state', 'visible', 'friend_sync', 'show_activity', 'access_token')
+    __slots__ = ("_state", "visible", "friend_sync", "show_activity", "access_token")
 
     def __init__(self, *, data, state):
         self._state = state
         super().__init__(data)
 
-        self.visible: bool = bool(data.get('visibility', True))
-        self.friend_sync: bool = data.get('friend_sync', False)
-        self.show_activity: bool = data.get('show_activity', True)
-        self.access_token: Optional[str] = data.get('access_token')
+        self.visible: bool = bool(data.get("visibility", True))
+        self.friend_sync: bool = data.get("friend_sync", False)
+        self.show_activity: bool = data.get("show_activity", True)
+        self.access_token: Optional[str] = data.get("access_token")
 
     async def edit(self, *, visible: bool = MISSING):
         """|coro|
@@ -121,7 +121,9 @@ class Connection(PartialConnection):
             The new connection.
         """
         if visible is not MISSING:
-            data = await self._state.http.edit_connection(self.type, self.id, visibility=visible)
+            data = await self._state.http.edit_connection(
+                self.type, self.id, visibility=visible
+            )
             return Connection(data=data, state=self._state)
         else:
             return self

@@ -27,69 +27,84 @@ from collections import namedtuple
 from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type, TypeVar
 
 __all__ = (
-    'Enum',
-    'ChannelType',
-    'MessageType',
-    'VoiceRegion',
-    'SpeakingState',
-    'VerificationLevel',
-    'ContentFilter',
-    'Status',
-    'DefaultAvatar',
-    'AuditLogAction',
-    'AuditLogActionCategory',
-    'UserFlags',
-    'ActivityType',
-    'NotificationLevel',
-    'TeamMembershipState',
-    'WebhookType',
-    'ExpireBehaviour',
-    'ExpireBehavior',
-    'StickerType',
-    'StickerFormatType',
-    'InviteTarget',
-    'VideoQualityMode',
-    'ComponentType',
-    'ButtonStyle',
-    'PrivacyLevel',
-    'InteractionType',
-    'NSFWLevel',
-    'RelationshipType',
-    'HypeSquadHouse',
-    'PremiumType',
-    'UserContentFilter',
-    'FriendFlags',
-    'Theme',
-    'StickerAnimationOptions',
-    'RelationshipAction',
-    'UnavailableGuildType',
-    'RequiredActionType',
-    'ReportType',
-    'BrowserEnum',
-    'CommandType',
-    'OptionType',
-    'ApplicationVerificationState',
-    'StoreApplicationState',
-    'RPCApplicationState',
-    'InviteType',
-    'ScheduledEventStatus',
-    'ScheduledEventEntityType',
+    "Enum",
+    "ChannelType",
+    "MessageType",
+    "VoiceRegion",
+    "SpeakingState",
+    "VerificationLevel",
+    "ContentFilter",
+    "Status",
+    "DefaultAvatar",
+    "AuditLogAction",
+    "AuditLogActionCategory",
+    "UserFlags",
+    "ActivityType",
+    "NotificationLevel",
+    "TeamMembershipState",
+    "WebhookType",
+    "ExpireBehaviour",
+    "ExpireBehavior",
+    "StickerType",
+    "StickerFormatType",
+    "InviteTarget",
+    "VideoQualityMode",
+    "ComponentType",
+    "ButtonStyle",
+    "PrivacyLevel",
+    "InteractionType",
+    "NSFWLevel",
+    "RelationshipType",
+    "HypeSquadHouse",
+    "PremiumType",
+    "UserContentFilter",
+    "FriendFlags",
+    "Theme",
+    "StickerAnimationOptions",
+    "RelationshipAction",
+    "UnavailableGuildType",
+    "RequiredActionType",
+    "ReportType",
+    "BrowserEnum",
+    "CommandType",
+    "OptionType",
+    "ApplicationVerificationState",
+    "StoreApplicationState",
+    "RPCApplicationState",
+    "InviteType",
+    "ScheduledEventStatus",
+    "ScheduledEventEntityType",
 )
 
 
 def _create_value_cls(name, comparable):
-    cls = namedtuple('_EnumValue_' + name, 'name value')
-    cls.__repr__ = lambda self: f'<{name}.{self.name}: {self.value!r}>'
-    cls.__str__ = lambda self: f'{name}.{self.name}'
+    cls = namedtuple("_EnumValue_" + name, "name value")
+    cls.__repr__ = lambda self: f"<{name}.{self.name}: {self.value!r}>"
+    cls.__str__ = lambda self: f"{name}.{self.name}"
     if comparable:
-        cls.__le__ = lambda self, other: isinstance(other, self.__class__) and self.value <= other.value
-        cls.__ge__ = lambda self, other: isinstance(other, self.__class__) and self.value >= other.value
-        cls.__lt__ = lambda self, other: isinstance(other, self.__class__) and self.value < other.value
-        cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value
+        cls.__le__ = (
+            lambda self, other: isinstance(other, self.__class__)
+            and self.value <= other.value
+        )
+        cls.__ge__ = (
+            lambda self, other: isinstance(other, self.__class__)
+            and self.value >= other.value
+        )
+        cls.__lt__ = (
+            lambda self, other: isinstance(other, self.__class__)
+            and self.value < other.value
+        )
+        cls.__gt__ = (
+            lambda self, other: isinstance(other, self.__class__)
+            and self.value > other.value
+        )
     return cls
 
+
 def _is_descriptor(obj):
-    return hasattr(obj, '__get__') or hasattr(obj, '__set__') or hasattr(obj, '__delete__')
+    return (
+        hasattr(obj, "__get__") or hasattr(obj, "__set__") or hasattr(obj, "__delete__")
+    )
 
 
 class EnumMeta(type):
@@ -107,7 +122,7 @@ class EnumMeta(type):
         value_cls = _create_value_cls(name, comparable)
         for key, value in list(attrs.items()):
             is_descriptor = _is_descriptor(value)
-            if key[0] == '_' and not is_descriptor:
+            if key[0] == "_" and not is_descriptor:
                 continue
 
             # Special case classmethod to just pass through
@@ -129,10 +144,10 @@ class EnumMeta(type):
             member_mapping[key] = new_value
             attrs[key] = new_value
 
-        attrs['_enum_value_map_'] = value_mapping
-        attrs['_enum_member_map_'] = member_mapping
-        attrs['_enum_member_names_'] = member_names
-        attrs['_enum_value_cls_'] = value_cls
+        attrs["_enum_value_map_"] = value_mapping
+        attrs["_enum_member_map_"] = member_mapping
+        attrs["_enum_member_names_"] = member_names
+        attrs["_enum_value_cls_"] = value_cls
         actual_cls = super().__new__(cls, name, bases, attrs)
         value_cls._actual_enum_cls_ = actual_cls  # type: ignore
         return actual_cls
@@ -141,13 +156,15 @@ class EnumMeta(type):
         return (cls._enum_member_map_[name] for name in cls._enum_member_names_)
 
     def __reversed__(cls):
-        return (cls._enum_member_map_[name] for name in reversed(cls._enum_member_names_))
+        return (
+            cls._enum_member_map_[name] for name in reversed(cls._enum_member_names_)
+        )
 
     def __len__(cls):
         return len(cls._enum_member_names_)
 
     def __repr__(cls):
-        return f'<enum {cls.__name__}>'
+        return f"<enum {cls.__name__}>"
 
     @property
     def __members__(cls):
@@ -163,10 +180,10 @@ class EnumMeta(type):
         return cls._enum_member_map_[key]
 
     def __setattr__(cls, name, value):
-        raise TypeError('Enums are immutable')
+        raise TypeError("Enums are immutable")
 
     def __delattr__(cls, attr):
-        raise TypeError('Enums are immutable')
+        raise TypeError("Enums are immutable")
 
     def __instancecheck__(self, instance):
         # isinstance(x, Y)
@@ -241,29 +258,29 @@ class MessageType(Enum):
 
 
 class VoiceRegion(Enum):
-    us_west = 'us-west'
-    us_east = 'us-east'
-    us_south = 'us-south'
-    us_central = 'us-central'
-    eu_west = 'eu-west'
-    eu_central = 'eu-central'
-    singapore = 'singapore'
-    london = 'london'
-    sydney = 'sydney'
-    amsterdam = 'amsterdam'
-    frankfurt = 'frankfurt'
-    brazil = 'brazil'
-    hongkong = 'hongkong'
-    russia = 'russia'
-    japan = 'japan'
-    southafrica = 'southafrica'
-    south_korea = 'south-korea'
-    india = 'india'
-    europe = 'europe'
-    dubai = 'dubai'
-    vip_us_east = 'vip-us-east'
-    vip_us_west = 'vip-us-west'
-    vip_amsterdam = 'vip-amsterdam'
+    us_west = "us-west"
+    us_east = "us-east"
+    us_south = "us-south"
+    us_central = "us-central"
+    eu_west = "eu-west"
+    eu_central = "eu-central"
+    singapore = "singapore"
+    london = "london"
+    sydney = "sydney"
+    amsterdam = "amsterdam"
+    frankfurt = "frankfurt"
+    brazil = "brazil"
+    hongkong = "hongkong"
+    russia = "russia"
+    japan = "japan"
+    southafrica = "southafrica"
+    south_korea = "south-korea"
+    india = "india"
+    europe = "europe"
+    dubai = "dubai"
+    vip_us_east = "vip-us-east"
+    vip_us_west = "vip-us-west"
+    vip_amsterdam = "vip-amsterdam"
 
     def __str__(self):
         return self.value
@@ -303,41 +320,41 @@ class ContentFilter(Enum, comparable=True):
 
 
 class UserContentFilter(Enum):
-    always         = 0
+    always = 0
     on_interaction = 1
-    never          = 2
+    never = 2
 
 
 class StickerAnimationOptions(Enum):
-    disabled     = 2
-    friends      = 1
+    disabled = 2
+    friends = 1
     all_messages = 0
 
 
 class FriendFlags(Enum):
-    noone             = 0
-    mutual_guilds     = 1
-    mutual_friends    = 2
+    noone = 0
+    mutual_guilds = 1
+    mutual_friends = 2
     guild_and_friends = 3
-    everyone          = 4
+    everyone = 4
 
     def to_dict(self):
         if self.value == 0:
-            return {'all': False, 'mutual_friends': False, 'mutual_guilds': False}
+            return {"all": False, "mutual_friends": False, "mutual_guilds": False}
         if self.value == 1:
-            return {'all': False, 'mutual_friends': False, 'mutual_guilds': True}
+            return {"all": False, "mutual_friends": False, "mutual_guilds": True}
         if self.value == 2:
-            return {'all': False, 'mutual_friends': True, 'mutual_guilds': False}
+            return {"all": False, "mutual_friends": True, "mutual_guilds": False}
         if self.value == 3:
-            return {'all': False, 'mutual_friends': True, 'mutual_guilds': True}
+            return {"all": False, "mutual_friends": True, "mutual_guilds": True}
         if self.value == 4:
-            return {'all': True, 'mutual_friends': True, 'mutual_guilds': True}
+            return {"all": True, "mutual_friends": True, "mutual_guilds": True}
 
     @classmethod
     def _from_dict(cls, data):
-        all = data.get('all')
-        mutual_guilds = data.get('mutual_guilds')
-        mutual_friends = data.get('mutual_friends')
+        all = data.get("all")
+        mutual_guilds = data.get("mutual_guilds")
+        mutual_friends = data.get("mutual_friends")
 
         if all:
             return cls.everyone
@@ -352,17 +369,17 @@ class FriendFlags(Enum):
 
 
 class Theme(Enum):
-    light = 'light'
-    dark = 'dark'
+    light = "light"
+    dark = "dark"
 
 
 class Status(Enum):
-    online = 'online'
-    offline = 'offline'
-    idle = 'idle'
-    dnd = 'dnd'
-    do_not_disturb = 'dnd'
-    invisible = 'invisible'
+    online = "online"
+    offline = "offline"
+    idle = "idle"
+    dnd = "dnd"
+    do_not_disturb = "dnd"
+    invisible = "invisible"
 
     def __str__(self):
         return self.value
@@ -382,8 +399,8 @@ class DefaultAvatar(Enum):
 
 
 class RelationshipType(Enum, comparable=True):
-    friend           = 1
-    blocked          = 2
+    friend = 1
+    blocked = 2
     incoming_request = 3
     outgoing_request = 4
 
@@ -511,33 +528,33 @@ class AuditLogAction(Enum):
     def target_type(self) -> Optional[str]:
         v = self.value
         if v == -1:
-            return 'all'
+            return "all"
         elif v < 10:
-            return 'guild'
+            return "guild"
         elif v < 20:
-            return 'channel'
+            return "channel"
         elif v < 30:
-            return 'user'
+            return "user"
         elif v < 40:
-            return 'role'
+            return "role"
         elif v < 50:
-            return 'invite'
+            return "invite"
         elif v < 60:
-            return 'webhook'
+            return "webhook"
         elif v < 70:
-            return 'emoji'
+            return "emoji"
         elif v == 73:
-            return 'channel'
+            return "channel"
         elif v < 80:
-            return 'message'
+            return "message"
         elif v < 83:
-            return 'integration'
+            return "integration"
         elif v < 90:
-            return 'stage_instance'
+            return "stage_instance"
         elif v < 93:
-            return 'sticker'
+            return "sticker"
         elif v < 113:
-            return 'thread'
+            return "thread"
 
 
 class UserFlags(Enum):
@@ -579,14 +596,14 @@ class ActivityType(Enum):
 
 
 class HypeSquadHouse(Enum):
-    bravery    = 1
+    bravery = 1
     brilliance = 2
-    balance    = 3
+    balance = 3
 
 
 class PremiumType(Enum, comparable=True):
     nitro_classic = 1
-    nitro         = 2
+    nitro = 2
 
 
 class TeamMembershipState(Enum):
@@ -632,44 +649,44 @@ class StickerFormatType(Enum):
 
 class ReportType(Enum):
     illegal_content = 1
-    harassment      = 2
-    phishing        = 3
-    self_harm       = 4
-    nsfw_content    = 5
+    harassment = 2
+    phishing = 3
+    self_harm = 4
+    nsfw_content = 5
 
     def __int__(self):
         return self.value
 
 
 class RelationshipAction(Enum):
-    send_friend_request    = 'request'
-    unfriend               = 'unfriend'
-    accept_request         = 'accept'
-    deny_request           = 'deny'
-    block                  = 'block'
-    unblock                = 'unblock'
-    remove_pending_request = 'remove'
+    send_friend_request = "request"
+    unfriend = "unfriend"
+    accept_request = "accept"
+    deny_request = "deny"
+    block = "block"
+    unblock = "unblock"
+    remove_pending_request = "remove"
 
 
 class UnavailableGuildType(Enum):
-    existing = 'ready'
-    joined   = 'joined'
+    existing = "ready"
+    joined = "joined"
 
 
 class RequiredActionType(Enum):
-    verify_phone     = 'REQUIRE_VERIFIED_PHONE'
-    verify_email     = 'REQUIRE_VERIFIED_EMAIL'
-    complete_captcha = 'REQUIRE_CAPTCHA'
-    accept_terms     = 'AGREEMENTS'
+    verify_phone = "REQUIRE_VERIFIED_PHONE"
+    verify_email = "REQUIRE_VERIFIED_EMAIL"
+    complete_captcha = "REQUIRE_CAPTCHA"
+    accept_terms = "AGREEMENTS"
 
 
 class BrowserEnum(Enum):
-    google_chrome = 'chrome'
-    chrome = 'chrome'
-    chromium = 'chromium'
-    microsoft_edge = 'microsoft-edge'
-    edge = 'microsoft-edge'
-    opera = 'opera'
+    google_chrome = "chrome"
+    chrome = "chrome"
+    chromium = "chromium"
+    microsoft_edge = "microsoft-edge"
+    edge = "microsoft-edge"
+    opera = "opera"
 
 
 class InviteTarget(Enum):
@@ -801,12 +818,12 @@ class RPCApplicationState(Enum, comparable=True):
     rejected = 4
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def create_unknown_value(cls: Type[T], val: Any) -> T:
     value_cls = cls._enum_value_cls_  # type: ignore
-    name = f'unknown_{val}'
+    name = f"unknown_{val}"
     return value_cls(name=name, value=val)
 
 

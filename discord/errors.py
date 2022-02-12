@@ -36,19 +36,19 @@ if TYPE_CHECKING:
         _ResponseType = ClientResponse
 
 __all__ = (
-    'DiscordException',
-    'ClientException',
-    'NoMoreItems',
-    'GatewayNotFound',
-    'HTTPException',
-    'Forbidden',
-    'NotFound',
-    'DiscordServerError',
-    'InvalidData',
-    'InvalidArgument',
-    'AuthFailure',
-    'LoginFailure',
-    'ConnectionClosed',
+    "DiscordException",
+    "ClientException",
+    "NoMoreItems",
+    "GatewayNotFound",
+    "HTTPException",
+    "Forbidden",
+    "NotFound",
+    "DiscordServerError",
+    "InvalidData",
+    "InvalidArgument",
+    "AuthFailure",
+    "LoginFailure",
+    "ConnectionClosed",
 )
 
 
@@ -57,6 +57,7 @@ class DiscordException(Exception):
 
     Ideally speaking, this could be caught to handle any exceptions raised from this library.
     """
+
     pass
 
 
@@ -65,33 +66,36 @@ class ClientException(DiscordException):
 
     These are usually for exceptions that happened due to user input.
     """
+
     pass
 
 
 class NoMoreItems(DiscordException):
     """Exception that is raised when an async iteration operation has no more items."""
+
     pass
 
 
 class GatewayNotFound(DiscordException):
     """An exception that is raised when the gateway for Discord could not be found"""
+
     def __init__(self):
-        message = 'The gateway to connect to Discord was not found.'
+        message = "The gateway to connect to Discord was not found."
         super().__init__(message)
 
 
-def _flatten_error_dict(d: Dict[str, Any], key: str = '') -> Dict[str, str]:
+def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
     items: List[Tuple[str, str]] = []
     for k, v in d.items():
-        new_key = key + '.' + k if key else k
+        new_key = key + "." + k if key else k
 
         if isinstance(v, dict):
             try:
-                _errors: List[Dict[str, Any]] = v['_errors']
+                _errors: List[Dict[str, Any]] = v["_errors"]
             except KeyError:
                 items.extend(_flatten_error_dict(v, new_key).items())
             else:
-                items.append((new_key, ' '.join(x.get('message', '') for x in _errors)))
+                items.append((new_key, " ".join(x.get("message", "") for x in _errors)))
         else:
             items.append((new_key, v))
 
@@ -116,29 +120,32 @@ class HTTPException(DiscordException):
     json: :class:`dict`
         The raw error JSON.
     """
-    def __init__(self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]):
+
+    def __init__(
+        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
+    ):
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
         self.code: int
         self.text: str
         if isinstance(message, dict):
             self.json = message
-            self.code = message.get('code', 0)
-            base = message.get('message', '')
-            errors = message.get('errors')
+            self.code = message.get("code", 0)
+            base = message.get("message", "")
+            errors = message.get("errors")
             if errors:
                 errors = _flatten_error_dict(errors)
-                helpful = '\n'.join('In %s: %s' % t for t in errors.items())
-                self.text = base + '\n' + helpful
+                helpful = "\n".join("In %s: %s" % t for t in errors.items())
+                self.text = base + "\n" + helpful
             else:
                 self.text = base
         else:
-            self.text = message or ''
+            self.text = message or ""
             self.code = 0
 
-        fmt = '{0.status} {0.reason} (error code: {1})'
+        fmt = "{0.status} {0.reason} (error code: {1})"
         if len(self.text):
-            fmt += ': {2}'
+            fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
 
@@ -148,6 +155,7 @@ class Forbidden(HTTPException):
 
     Subclass of :exc:`HTTPException`
     """
+
     pass
 
 
@@ -156,6 +164,7 @@ class NotFound(HTTPException):
 
     Subclass of :exc:`HTTPException`
     """
+
     pass
 
 
@@ -166,6 +175,7 @@ class DiscordServerError(HTTPException):
 
     .. versionadded:: 1.5
     """
+
     pass
 
 
@@ -173,6 +183,7 @@ class InvalidData(ClientException):
     """Exception that's raised when the library encounters unknown
     or invalid data from Discord.
     """
+
     pass
 
 
@@ -184,6 +195,7 @@ class InvalidArgument(ClientException):
     ``TypeError`` except inherited from :exc:`ClientException` and thus
     :exc:`DiscordException`.
     """
+
     pass
 
 
@@ -192,6 +204,7 @@ class AuthFailure(ClientException):
     fails to log you in from improper credentials or some other misc.
     failure.
     """
+
     pass
 
 
@@ -209,10 +222,11 @@ class ConnectionClosed(ClientException):
     reason: :class:`str`
         The reason provided for the closure.
     """
+
     def __init__(self, socket: ClientWebSocketResponse, *, code: Optional[int] = None):
         # This exception is just the same exception except
         # reconfigured to subclass ClientException for users
         self.code: int = code or socket.close_code or -1
         # aiohttp doesn't seem to consistently provide close reason
-        self.reason: str = ''
-        super().__init__(f'WebSocket closed with {self.code}')
+        self.reason: str = ""
+        super().__init__(f"WebSocket closed with {self.code}")

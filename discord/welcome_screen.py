@@ -41,8 +41,8 @@ if TYPE_CHECKING:
     )
 
 __all__ = (
-    'WelcomeChannel',
-    'WelcomeScreen',
+    "WelcomeChannel",
+    "WelcomeScreen",
 )
 
 
@@ -62,38 +62,46 @@ class WelcomeChannel:
     """
 
     def __init__(
-        self, *, channel: Snowflake, description: str, emoji: Optional[Union[PartialEmoji, Emoji]] = None
+        self,
+        *,
+        channel: Snowflake,
+        description: str,
+        emoji: Optional[Union[PartialEmoji, Emoji]] = None,
     ) -> None:
         self.channel = channel
         self.description = description
         self.emoji = emoji
 
     def __repr__(self) -> str:
-        return f'<WelcomeChannel channel={self.channel!r} description={self.description} emoji={self.emoji!r}>'
+        return f"<WelcomeChannel channel={self.channel!r} description={self.description} emoji={self.emoji!r}>"
 
     @classmethod
-    def _from_dict(cls, *, data: WelcomeScreenChannelPayload, state: ConnectionState) -> WelcomeChannel:
-        channel_id = _get_as_snowflake(data, 'channel_id')
+    def _from_dict(
+        cls, *, data: WelcomeScreenChannelPayload, state: ConnectionState
+    ) -> WelcomeChannel:
+        channel_id = _get_as_snowflake(data, "channel_id")
         channel = state.get_channel(channel_id) or Object(id=channel_id)
 
         emoji = None
-        if (emoji_id := _get_as_snowflake(data, 'emoji_id')) is not None:
+        if (emoji_id := _get_as_snowflake(data, "emoji_id")) is not None:
             emoji = state.get_emoji(emoji_id)
-        elif (emoji_name := data.get('emoji_name')) is not None:
+        elif (emoji_name := data.get("emoji_name")) is not None:
             emoji = PartialEmoji(name=emoji_name)
 
-        return cls(channel=channel, description=data.get('description', ''), emoji=emoji)
+        return cls(
+            channel=channel, description=data.get("description", ""), emoji=emoji
+        )
 
     def _to_dict(self) -> WelcomeScreenChannelPayload:
         data = {
-            'channel_id': self.channel.id,
-            'description': self.description,
-            'emoji_id': None,
-            'emoji_name': None,
+            "channel_id": self.channel.id,
+            "description": self.description,
+            "emoji_id": None,
+            "emoji_name": None,
         }
         if (emoji := self.emoji) is not None:
-            data['emoji_id'] = emoji.id
-            data['emoji_name'] = emoji.name
+            data["emoji_id"] = emoji.id
+            data["emoji_name"] = emoji.name
 
         return data
 
@@ -125,13 +133,15 @@ class WelcomeScreen:
 
     def _update(self, data: WelcomeScreenPayload) -> None:
         state = self.guild._state
-        channels = data.get('welcome_channels', [])
+        channels = data.get("welcome_channels", [])
 
-        self.welcome_channels = [WelcomeChannel._from_dict(data=channel, state=state) for channel in channels]
-        self.description = data.get('description', '')
+        self.welcome_channels = [
+            WelcomeChannel._from_dict(data=channel, state=state) for channel in channels
+        ]
+        self.description = data.get("description", "")
 
     def __repr__(self) -> str:
-        return f'<WelcomeScreen enabled={self.enabled} description={self.description} welcome_channels={self.welcome_channels!r}>'
+        return f"<WelcomeScreen enabled={self.enabled} description={self.description} welcome_channels={self.welcome_channels!r}>"
 
     def __bool__(self) -> bool:
         return self.enabled
@@ -139,7 +149,7 @@ class WelcomeScreen:
     @property
     def enabled(self) -> bool:
         """:class:`bool`: Whether the welcome screen is displayed."""
-        return 'WELCOME_SCREEN_ENABLED' in self.guild.features
+        return "WELCOME_SCREEN_ENABLED" in self.guild.features
 
     async def edit(
         self,
@@ -174,12 +184,16 @@ class WelcomeScreen:
         payload = {}
 
         if enabled is not MISSING:
-            payload['enabled'] = enabled
+            payload["enabled"] = enabled
         if description is not MISSING:
-            payload['description'] = description
+            payload["description"] = description
         if welcome_channels is not MISSING:
-            channels = [channel.to_dict() for channel in welcome_channels] if welcome_channels else []
-            payload['welcome_channels'] = channels
+            channels = (
+                [channel.to_dict() for channel in welcome_channels]
+                if welcome_channels
+                else []
+            )
+            payload["welcome_channels"] = channels
 
         if payload:
             guild = self.guild

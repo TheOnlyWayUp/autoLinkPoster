@@ -34,6 +34,7 @@ bot.config = config
 
 # --- Functions --- #
 
+
 async def readyDatabase() -> bool:
     """Checks if the database is ready to be used. Else creates a database - username: str, id: int, title: str, description: str, url: str, date_added: str, sent: bool
 
@@ -84,6 +85,7 @@ def returnInfo(string: str) -> Dict[str, str]:
 
 
 # --- Events --- #
+
 
 @bot.event
 async def on_ready() -> None:
@@ -155,6 +157,7 @@ async def on_message(message: discord.Message) -> None:
 
 
 # --- Tasks --- #
+
 
 @tasks.loop(minutes=bot.config["sendingDelay"])
 async def sendLinks() -> None:

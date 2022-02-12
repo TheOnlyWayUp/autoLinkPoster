@@ -28,7 +28,15 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from .activity import create_settings_activity
-from .enums import FriendFlags, NotificationLevel, Status, StickerAnimationOptions, Theme, UserContentFilter, try_enum
+from .enums import (
+    FriendFlags,
+    NotificationLevel,
+    Status,
+    StickerAnimationOptions,
+    Theme,
+    UserContentFilter,
+    try_enum,
+)
 from .guild_folder import GuildFolder
 from .utils import copy_doc, MISSING, parse_time, utcnow
 
@@ -40,9 +48,9 @@ if TYPE_CHECKING:
     from .tracking import Tracking
 
 __all__ = (
-    'ChannelSettings',
-    'GuildSettings',
-    'UserSettings',
+    "ChannelSettings",
+    "GuildSettings",
+    "UserSettings",
 )
 
 
@@ -132,42 +140,42 @@ class UserSettings:
         self._update(data)
 
     def __repr__(self) -> str:
-        return '<Settings>'
+        return "<Settings>"
 
     def _get_guild(self, id: int) -> Optional[Guild]:
         return self._state._get_guild(int(id))
 
     def _update(self, data: Dict[str, Any]) -> None:
         RAW_VALUES = {
-            'afk_timeout',
-            'allow_accessibility_detection',
-            'animate_emojis',
-            'contact_sync_enabled',
-            'convert_emoticons',
-            'default_guilds_restricted',
-            'detect_platform_accounts',
-            'developer_mode',
-            'disable_games_tab',
-            'enable_tts_command',
-            'gif_auto_play',
-            'inline_attachment_media',
-            'inline_embed_media',
-            'locale',
-            'message_display_compact',
-            'native_phone_integration_enabled',
-            'render_embeds',
-            'render_reactions',
-            'show_current_game',
-            'stream_notifications_enabled',
-            'timezone_offset',
-            'view_nsfw_guilds',
+            "afk_timeout",
+            "allow_accessibility_detection",
+            "animate_emojis",
+            "contact_sync_enabled",
+            "convert_emoticons",
+            "default_guilds_restricted",
+            "detect_platform_accounts",
+            "developer_mode",
+            "disable_games_tab",
+            "enable_tts_command",
+            "gif_auto_play",
+            "inline_attachment_media",
+            "inline_embed_media",
+            "locale",
+            "message_display_compact",
+            "native_phone_integration_enabled",
+            "render_embeds",
+            "render_reactions",
+            "show_current_game",
+            "stream_notifications_enabled",
+            "timezone_offset",
+            "view_nsfw_guilds",
         }
 
         for key, value in data.items():
             if key in RAW_VALUES:
                 setattr(self, key, value)
             else:
-                setattr(self, '_' + key, value)
+                setattr(self, "_" + key, value)
 
     async def edit(self, **kwargs) -> UserSettings:
         """|coro|
@@ -281,57 +289,68 @@ class UserSettings:
     @property
     def animate_stickers(self) -> StickerAnimationOptions:
         """:class:`StickerAnimationOptions`: Whether or not to animate stickers in the chat."""
-        return try_enum(StickerAnimationOptions, getattr(self, '_animate_stickers', 0))
+        return try_enum(StickerAnimationOptions, getattr(self, "_animate_stickers", 0))
 
     @property
     def custom_activity(self) -> Optional[CustomActivity]:
         """Optional[:class:`CustomActivity]: The custom activity you have set."""
-        return create_settings_activity(data=getattr(self, '_custom_status', None), state=self._state)
+        return create_settings_activity(
+            data=getattr(self, "_custom_status", None), state=self._state
+        )
 
     @property
     def explicit_content_filter(self) -> UserContentFilter:
         """:class:`UserContentFilter`: The filter for explicit content in all messages."""
-        return try_enum(UserContentFilter, getattr(self, '_explicit_content_filter', 1))
+        return try_enum(UserContentFilter, getattr(self, "_explicit_content_filter", 1))
 
     @property
     def friend_source_flags(self) -> FriendFlags:
         """:class:`FriendFlags`: Who can add you as a friend."""
-        return FriendFlags._from_dict(getattr(self, '_friend_source_flags', {'all': True}))
+        return FriendFlags._from_dict(
+            getattr(self, "_friend_source_flags", {"all": True})
+        )
 
     @property
     def guild_folders(self) -> List[GuildFolder]:
         """List[:class:`GuildFolder`]: A list of guild folders."""
         state = self._state
-        return [GuildFolder(data=folder, state=state) for folder in getattr(self, '_guild_folders', [])]
+        return [
+            GuildFolder(data=folder, state=state)
+            for folder in getattr(self, "_guild_folders", [])
+        ]
 
     @property
     def guild_positions(self) -> List[Guild]:
         """List[:class:`Guild`]: A list of guilds in order of the guild/guild icons that are on the left hand side of the UI."""
-        return list(filter(None, map(self._get_guild, getattr(self, '_guild_positions', []))))
+        return list(
+            filter(None, map(self._get_guild, getattr(self, "_guild_positions", [])))
+        )
 
     @property
     def passwordless(self) -> bool:
         """:class:`bool`: Whether the account is passwordless."""
-        return getattr(self, '_passwordless', False)
+        return getattr(self, "_passwordless", False)
 
     @property
     def restricted_guilds(self) -> List[Guild]:
         """List[:class:`Guild`]: A list of guilds that you will not receive DMs from."""
-        return list(filter(None, map(self._get_guild, getattr(self, '_restricted_guilds', []))))
+        return list(
+            filter(None, map(self._get_guild, getattr(self, "_restricted_guilds", [])))
+        )
 
     @property
     def status(self) -> Status:
-        return try_enum(Status, getattr(self, '_status', 'online'))
+        return try_enum(Status, getattr(self, "_status", "online"))
 
     @property
     def theme(self) -> Theme:
         """:class:`Theme`: The theme of the Discord UI."""
-        return try_enum(Theme, getattr(self, '_theme', 'dark'))  # Sane default :)
+        return try_enum(Theme, getattr(self, "_theme", "dark"))  # Sane default :)
 
 
 class MuteConfig:
     def __init__(self, muted: bool, config: Dict[str, str]) -> None:
-        until = parse_time(config.get('end_time'))
+        until = parse_time(config.get("end_time"))
         if until is not None:
             if until <= utcnow():
                 muted = False
@@ -340,11 +359,11 @@ class MuteConfig:
         self.muted: bool = muted
         self.until: Optional[datetime] = until
 
-        for item in {'__bool__', '__eq__', '__float__', '__int__', '__str__'}:
+        for item in {"__bool__", "__eq__", "__float__", "__int__", "__str__"}:
             setattr(self, item, getattr(muted, item))
 
     def __repr__(self) -> str:
-        return f'<MuteConfig muted={self.muted} until={self.until}>'
+        return f"<MuteConfig muted={self.muted} until={self.until}>"
 
     def __bool__(self) -> bool:
         return bool(self.muted)
@@ -365,17 +384,19 @@ class ChannelSettings:
         muted: MuteConfig
         collapsed: bool
 
-    def __init__(self, guild_id, *, data: Dict[str, Any] = {}, state: ConnectionState) -> None:
+    def __init__(
+        self, guild_id, *, data: Dict[str, Any] = {}, state: ConnectionState
+    ) -> None:
         self._guild_id: int = guild_id
         self._state = state
         self._update(data)
 
     def _update(self, data: Dict[str, Any]) -> None:
-        self._channel_id = int(data['channel_id'])
-        self.collapsed = data.get('collapsed', False)
+        self._channel_id = int(data["channel_id"])
+        self.collapsed = data.get("collapsed", False)
 
-        self.level = try_enum(NotificationLevel, data.get('message_notifications', 3))  # type: ignore
-        self.muted = MuteConfig(data.get('muted', False), data.get('mute_config') or {})
+        self.level = try_enum(NotificationLevel, data.get("message_notifications", 3))  # type: ignore
+        self.muted = MuteConfig(data.get("muted", False), data.get("mute_config") or {})
 
     @property
     def channel(self) -> Optional[GuildChannel]:
@@ -383,7 +404,8 @@ class ChannelSettings:
         guild = self._state._get_guild(self._guild_id)
         return guild and guild.get_channel(self._channel_id)
 
-    async def edit(self,
+    async def edit(
+        self,
         *,
         muted: bool = MISSING,
         duration: Optional[int] = MISSING,
@@ -422,34 +444,36 @@ class ChannelSettings:
         data = None
 
         if muted is not MISSING:
-            payload['muted'] = muted
+            payload["muted"] = muted
 
         if duration is not MISSING:
             if muted is MISSING:
-                payload['muted'] = True
+                payload["muted"] = True
 
             if duration is not None:
                 mute_config = {
-                    'selected_time_window': duration * 3600,
-                    'end_time': (datetime.utcnow() + timedelta(hours=duration)).isoformat()
+                    "selected_time_window": duration * 3600,
+                    "end_time": (
+                        datetime.utcnow() + timedelta(hours=duration)
+                    ).isoformat(),
                 }
-                payload['mute_config'] = mute_config
+                payload["mute_config"] = mute_config
 
         if collapsed is not MISSING:
-            payload['collapsed'] = collapsed
+            payload["collapsed"] = collapsed
 
         if level is not MISSING:
-            payload['message_notifications'] = level.value
+            payload["message_notifications"] = level.value
 
         if payload:
-            fields = {'channel_overrides': {str(self._channel_id): payload}}
+            fields = {"channel_overrides": {str(self._channel_id): payload}}
             data = await self._state.http.edit_guild_settings(self._guild_id, fields)
 
         if data:
             return ChannelSettings(
                 self._guild_id,
-                data=data['channel_overrides'][str(self._channel_id)],
-                state=self._state
+                data=data["channel_overrides"][str(self._channel_id)],
+                state=self._state,
             )
         else:
             return self
@@ -474,20 +498,22 @@ class GuildSettings:
         self._update(data)
 
     def _update(self, data: Dict[str, Any]) -> None:
-        self._guild_id = guild_id = int(data['guild_id'])
-        self.version = data.get('version', -1)  # Overriden by real data
-        self.suppress_everyone = data.get('suppress_everyone', False)
-        self.suppress_roles = data.get('suppress_roles', False)
-        self.hide_muted_channels = data.get('hide_muted_channels', False)
-        self.mobile_push_notifications = data.get('mobile_push', True)
+        self._guild_id = guild_id = int(data["guild_id"])
+        self.version = data.get("version", -1)  # Overriden by real data
+        self.suppress_everyone = data.get("suppress_everyone", False)
+        self.suppress_roles = data.get("suppress_roles", False)
+        self.hide_muted_channels = data.get("hide_muted_channels", False)
+        self.mobile_push_notifications = data.get("mobile_push", True)
 
-        self.level = try_enum(NotificationLevel, data.get('message_notifications', 3))
-        self.muted = MuteConfig(data.get('muted', False), data.get('mute_config') or {})
+        self.level = try_enum(NotificationLevel, data.get("message_notifications", 3))
+        self.muted = MuteConfig(data.get("muted", False), data.get("mute_config") or {})
         self._channel_overrides = overrides = {}
         state = self._state
-        for override in data.get('channel_overrides', []):
-            channel_id = int(override['channel_id'])
-            overrides[channel_id] = ChannelSettings(guild_id, data=override, state=state)
+        for override in data.get("channel_overrides", []):
+            channel_id = int(override["channel_id"])
+            overrides[channel_id] = ChannelSettings(
+                guild_id, data=override, state=state
+            )
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -547,33 +573,35 @@ class GuildSettings:
         data = None
 
         if muted is not MISSING:
-            payload['muted'] = muted
+            payload["muted"] = muted
 
         if duration is not MISSING:
             if muted is MISSING:
-                payload['muted'] = True
+                payload["muted"] = True
 
             if duration is not None:
                 mute_config = {
-                    'selected_time_window': duration * 3600,
-                    'end_time': (datetime.utcnow() + timedelta(hours=duration)).isoformat()
+                    "selected_time_window": duration * 3600,
+                    "end_time": (
+                        datetime.utcnow() + timedelta(hours=duration)
+                    ).isoformat(),
                 }
-                payload['mute_config'] = mute_config
+                payload["mute_config"] = mute_config
 
         if level is not MISSING:
-            payload['message_notifications'] = level.value
+            payload["message_notifications"] = level.value
 
         if suppress_everyone is not MISSING:
-            payload['suppress_everyone'] = suppress_everyone
+            payload["suppress_everyone"] = suppress_everyone
 
         if suppress_roles is not MISSING:
-            payload['suppress_roles'] = suppress_roles
+            payload["suppress_roles"] = suppress_roles
 
         if mobile_push_notifications is not MISSING:
-            payload['mobile_push'] = mobile_push_notifications
+            payload["mobile_push"] = mobile_push_notifications
 
         if hide_muted_channels is not MISSING:
-            payload['hide_muted_channels'] = hide_muted_channels
+            payload["hide_muted_channels"] = hide_muted_channels
 
         if payload:
             data = await self._state.http.edit_guild_settings(self._guild_id, payload)

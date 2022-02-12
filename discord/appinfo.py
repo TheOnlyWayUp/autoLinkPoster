@@ -28,7 +28,12 @@ from typing import List, TYPE_CHECKING, Optional
 
 from . import utils
 from .asset import Asset
-from .enums import ApplicationVerificationState, RPCApplicationState, StoreApplicationState, try_enum
+from .enums import (
+    ApplicationVerificationState,
+    RPCApplicationState,
+    StoreApplicationState,
+    try_enum,
+)
 from .flags import ApplicationFlags
 from .user import User
 
@@ -44,22 +49,22 @@ if TYPE_CHECKING:
     from .user import BaseUser
 
 __all__ = (
-    'Application',
-    'PartialApplication',
+    "Application",
+    "PartialApplication",
 )
 
 MISSING = utils.MISSING
 
 
 class ApplicationBot(User):
-    __slots__ = ('token', 'public', 'require_code_grant')
+    __slots__ = ("token", "public", "require_code_grant")
 
     def __init__(self, *, data, state: ConnectionState, application: Application):
         super().__init__(state=state, data=data)
         self.application = application
-        self.token: str = data['token']
-        self.public: bool = data['public']
-        self.require_code_grant: bool = data['require_code_grant']
+        self.token: str = data["token"]
+        self.public: bool = data["public"]
+        self.require_code_grant: bool = data["require_code_grant"]
 
     async def reset_token(self) -> None:
         """|coro|
@@ -72,7 +77,7 @@ class ApplicationBot(User):
             Resetting the token failed.
         """
         data = await self._state.http.reset_token(self.application.id)
-        self.token = data['token']
+        self.token = data["token"]
         self._update(data)
 
     async def edit(
@@ -101,13 +106,15 @@ class ApplicationBot(User):
         """
         payload = {}
         if public is not MISSING:
-            payload['bot_public'] = public
+            payload["bot_public"] = public
         if require_code_grant is not MISSING:
-            payload['bot_require_code_grant'] = require_code_grant
+            payload["bot_require_code_grant"] = require_code_grant
 
-        data = await self._state.http.edit_application(self.application.id, payload=payload)
-        self.public = data['bot_public']
-        self.require_code_grant = data['bot_require_code_grant']
+        data = await self._state.http.edit_application(
+            self.application.id, payload=payload
+        )
+        self.public = data["bot_public"]
+        self.require_code_grant = data["bot_require_code_grant"]
         self.application._update(data)
 
 
@@ -151,23 +158,22 @@ class PartialApplication:
     """
 
     __slots__ = (
-        '_state',
-        'id',
-        'name',
-        'description',
-        'rpc_origins',
-        'summary',
-        'verify_key',
-        'terms_of_service_url',
-        'privacy_policy_url',
-        '_icon',
-        '_flags'
-        '_cover_image',
-        'public',
-        'require_code_grant',
-        'type',
-        'hook',
-        'premium_tier_level',
+        "_state",
+        "id",
+        "name",
+        "description",
+        "rpc_origins",
+        "summary",
+        "verify_key",
+        "terms_of_service_url",
+        "privacy_policy_url",
+        "_icon",
+        "_flags" "_cover_image",
+        "public",
+        "require_code_grant",
+        "type",
+        "hook",
+        "premium_tier_level",
     )
 
     def __init__(self, *, state: ConnectionState, data: PartialAppInfoPayload):
@@ -175,36 +181,42 @@ class PartialApplication:
         self._update(data)
 
     def _update(self, data: PartialAppInfoPayload) -> None:
-        self.id: int = int(data['id'])
-        self.name: str = data['name']
-        self.description: str = data['description']
-        self.rpc_origins: Optional[List[str]] = data.get('rpc_origins')
-        self.summary: str = data['summary']
-        self.verify_key: str = data['verify_key']
+        self.id: int = int(data["id"])
+        self.name: str = data["name"]
+        self.description: str = data["description"]
+        self.rpc_origins: Optional[List[str]] = data.get("rpc_origins")
+        self.summary: str = data["summary"]
+        self.verify_key: str = data["verify_key"]
 
-        self._icon: Optional[str] = data.get('icon')
-        self._cover_image: Optional[str] = data.get('cover_image')
+        self._icon: Optional[str] = data.get("icon")
+        self._cover_image: Optional[str] = data.get("cover_image")
 
-        self.terms_of_service_url: Optional[str] = data.get('terms_of_service_url')
-        self.privacy_policy_url: Optional[str] = data.get('privacy_policy_url')
-        self._flags: int = data.get('flags', 0)
-        self.type: Optional[int] = data.get('type')
-        self.hook: bool = data.get('hook', False)
-        self.max_participants: Optional[int] = data.get('max_participants')
-        self.premium_tier_level: Optional[int] = data.get('embedded_activity_config', {}).get('activity_premium_tier_level')
+        self.terms_of_service_url: Optional[str] = data.get("terms_of_service_url")
+        self.privacy_policy_url: Optional[str] = data.get("privacy_policy_url")
+        self._flags: int = data.get("flags", 0)
+        self.type: Optional[int] = data.get("type")
+        self.hook: bool = data.get("hook", False)
+        self.max_participants: Optional[int] = data.get("max_participants")
+        self.premium_tier_level: Optional[int] = data.get(
+            "embedded_activity_config", {}
+        ).get("activity_premium_tier_level")
 
-        self.public: bool = data.get('integration_public', data.get('bot_public'))  # The two seem to be used interchangeably?
-        self.require_code_grant: bool = data.get('integration_require_code_grant', data.get('bot_require_code_grant'))  # Same here
+        self.public: bool = data.get(
+            "integration_public", data.get("bot_public")
+        )  # The two seem to be used interchangeably?
+        self.require_code_grant: bool = data.get(
+            "integration_require_code_grant", data.get("bot_require_code_grant")
+        )  # Same here
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} id={self.id} name={self.name!r} description={self.description!r}>'
+        return f"<{self.__class__.__name__} id={self.id} name={self.name!r} description={self.description!r}>"
 
     @property
     def icon(self) -> Optional[Asset]:
         """Optional[:class:`.Asset`]: Retrieves the application's icon asset, if any."""
         if self._icon is None:
             return None
-        return Asset._from_icon(self._state, self.id, self._icon, path='app')
+        return Asset._from_icon(self._state, self.id, self._icon, path="app")
 
     @property
     def cover_image(self) -> Optional[Asset]:
@@ -262,59 +274,73 @@ class Application(PartialApplication):
     """
 
     __slots__ = (
-        'owner',
-        'team',
-        'guild_id',
-        'primary_sku_id',
-        'slug',
-        'secret',
-        'redirect_uris',
-        'bot',
-        'tags',
-        'verification_state',
-        'store_application_state',
-        'rpc_application_state',
-        'interactions_endpoint_url',
+        "owner",
+        "team",
+        "guild_id",
+        "primary_sku_id",
+        "slug",
+        "secret",
+        "redirect_uris",
+        "bot",
+        "tags",
+        "verification_state",
+        "store_application_state",
+        "rpc_application_state",
+        "interactions_endpoint_url",
     )
 
     def _update(self, data: AppInfoPayload) -> None:
         super()._update(data)
         from .team import Team
 
-        self.secret: str = data['secret']
-        self.redirect_uris: List[str] = data.get('redirect_uris', [])
+        self.secret: str = data["secret"]
+        self.redirect_uris: List[str] = data.get("redirect_uris", [])
 
-        self.tags: List[str] = data.get('tags', [])
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
+        self.tags: List[str] = data.get("tags", [])
+        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
 
-        self.verification_state = try_enum(ApplicationVerificationState, data['verification_state'])
-        self.store_application_state = try_enum(StoreApplicationState, data['store_application_state'])
-        self.rpc_application_state = try_enum(RPCApplicationState, data['rpc_application_state'])
+        self.verification_state = try_enum(
+            ApplicationVerificationState, data["verification_state"]
+        )
+        self.store_application_state = try_enum(
+            StoreApplicationState, data["store_application_state"]
+        )
+        self.rpc_application_state = try_enum(
+            RPCApplicationState, data["rpc_application_state"]
+        )
 
-        self.primary_sku_id: Optional[int] = utils._get_as_snowflake(data, 'primary_sku_id')
-        self.slug: Optional[str] = data.get('slug')
-        self.interactions_endpoint_url: Optional[str] = data['interactions_endpoint_url']
+        self.primary_sku_id: Optional[int] = utils._get_as_snowflake(
+            data, "primary_sku_id"
+        )
+        self.slug: Optional[str] = data.get("slug")
+        self.interactions_endpoint_url: Optional[str] = data[
+            "interactions_endpoint_url"
+        ]
 
         state = self._state
-        team: Optional[TeamPayload] = data.get('team')
+        team: Optional[TeamPayload] = data.get("team")
         self.team: Optional[Team] = Team(state, team) if team else None
 
-        if (bot := data.get('bot')):
-            bot['public'] = data.get('bot_public', self.public)
-            bot['require_code_grant'] = data.get('bot_require_code_grant', self.require_code_grant)
-        self.bot: Optional[ApplicationBot] = ApplicationBot(data=bot, state=state, application=self) if bot else None
+        if bot := data.get("bot"):
+            bot["public"] = data.get("bot_public", self.public)
+            bot["require_code_grant"] = data.get(
+                "bot_require_code_grant", self.require_code_grant
+            )
+        self.bot: Optional[ApplicationBot] = (
+            ApplicationBot(data=bot, state=state, application=self) if bot else None
+        )
 
-        owner = data.get('owner')
-        if owner is not None and int(owner['id']) != state.self_id:  # Consistency
+        owner = data.get("owner")
+        if owner is not None and int(owner["id"]) != state.self_id:  # Consistency
             self.owner: BaseUser = state.create_user(owner)
         else:
             self.owner: BaseUser = state.user  # type: ignore
 
     def __repr__(self) -> str:
         return (
-            f'<{self.__class__.__name__} id={self.id} name={self.name!r} '
-            f'description={self.description!r} public={self.public} '
-            f'owner={self.owner!r}>'
+            f"<{self.__class__.__name__} id={self.id} name={self.name!r} "
+            f"description={self.description!r} public={self.public} "
+            f"owner={self.owner!r}>"
         )
 
     @property
@@ -386,37 +412,37 @@ class Application(PartialApplication):
         """
         payload = {}
         if name is not MISSING:
-            payload['name'] = name or ''
+            payload["name"] = name or ""
         if description is not MISSING:
-            payload['description'] = description or ''
+            payload["description"] = description or ""
         if icon is not MISSING:
             if icon is not None:
-                payload['icon'] = utils._bytes_to_base64_data(icon)
+                payload["icon"] = utils._bytes_to_base64_data(icon)
             else:
-                payload['icon'] = ''
+                payload["icon"] = ""
         if cover_image is not MISSING:
             if cover_image is not None:
-                payload['cover_image'] = utils._bytes_to_base64_data(cover_image)
+                payload["cover_image"] = utils._bytes_to_base64_data(cover_image)
             else:
-                payload['cover_image'] = ''
+                payload["cover_image"] = ""
         if tags is not MISSING:
-            payload['tags'] = tags
+            payload["tags"] = tags
         if terms_of_service_url is not MISSING:
-            payload['terms_of_service_url'] = terms_of_service_url or ''
+            payload["terms_of_service_url"] = terms_of_service_url or ""
         if privacy_policy_url is not MISSING:
-            payload['privacy_policy_url'] = privacy_policy_url or ''
+            payload["privacy_policy_url"] = privacy_policy_url or ""
         if interactions_endpoint_url is not MISSING:
-            payload['interactions_endpoint_url'] = interactions_endpoint_url or ''
+            payload["interactions_endpoint_url"] = interactions_endpoint_url or ""
         if redirect_uris is not MISSING:
-            payload['redirect_uris'] = redirect_uris
+            payload["redirect_uris"] = redirect_uris
         if rpc_origins is not MISSING:
-            payload['rpc_origins'] = rpc_origins
+            payload["rpc_origins"] = rpc_origins
         if public is not MISSING:
-            payload['integration_public'] = public
+            payload["integration_public"] = public
         if require_code_grant is not MISSING:
-            payload['integration_require_code_grant'] = require_code_grant
+            payload["integration_require_code_grant"] = require_code_grant
         if flags is not MISSING:
-            payload['flags'] = flags.value
+            payload["flags"] = flags.value
 
         data = await self._state.http.edit_application(self.id, payload)
         if team is not MISSING:
@@ -459,8 +485,8 @@ class Application(PartialApplication):
         state = self._state
         data = await state.http.botify_app(self.id)
 
-        data['public'] = self.public
-        data['require_code_grant'] = self.require_code_grant
+        data["public"] = self.public
+        data["require_code_grant"] = self.require_code_grant
 
         bot = ApplicationBot(data=data, state=state, application=self)
         self.bot = bot

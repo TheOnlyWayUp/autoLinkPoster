@@ -56,7 +56,7 @@ class Interaction:
         The user who initiated the interaction.
     """
 
-    __slots__ = ('id', 'type', 'nonce', 'user', 'name', 'successful')
+    __slots__ = ("id", "type", "nonce", "user", "name", "successful")
 
     def __init__(
         self,
@@ -76,15 +76,27 @@ class Interaction:
 
     @classmethod
     def _from_self(
-        cls, *, id: Snowflake, type: int, nonce: Optional[Snowflake] = None, user: ClientUser, name: Optional[str]
+        cls,
+        *,
+        id: Snowflake,
+        type: int,
+        nonce: Optional[Snowflake] = None,
+        user: ClientUser,
+        name: Optional[str],
     ) -> Interaction:
         return cls(int(id), type, nonce, user=user, name=name)
 
     @classmethod
     def _from_message(
-        cls, state: ConnectionState, *, id: Snowflake, type: int, user: UserPayload, **data
+        cls,
+        state: ConnectionState,
+        *,
+        id: Snowflake,
+        type: int,
+        user: UserPayload,
+        **data,
     ) -> Interaction:
-        name = data.get('name')
+        name = data.get("name")
         user = state.store_user(user)
         inst = cls(int(id), type, user=user, name=name)
         inst.successful = True
@@ -97,4 +109,4 @@ class Interaction:
     def __bool__(self) -> bool:
         if self.successful is not None:
             return self.successful
-        raise TypeError('Interaction has not been resolved yet')
+        raise TypeError("Interaction has not been resolved yet")

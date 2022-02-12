@@ -35,8 +35,8 @@ from .errors import ClientException, InvalidData
 from .utils import MISSING, parse_time, snowflake_time, _get_as_snowflake
 
 __all__ = (
-    'Thread',
-    'ThreadMember',
+    "Thread",
+    "ThreadMember",
 )
 
 if TYPE_CHECKING:
@@ -120,25 +120,25 @@ class Thread(Messageable, Hashable):
     """
 
     __slots__ = (
-        'name',
-        'id',
-        'guild',
-        '_type',
-        '_state',
-        '_members',
-        'owner_id',
-        'parent_id',
-        'last_message_id',
-        'message_count',
-        'member_count',
-        'slowmode_delay',
-        'locked',
-        'archived',
-        'invitable',
-        'auto_archive_duration',
-        'archive_timestamp',
-        '_member_ids',
-        '_created_at',
+        "name",
+        "id",
+        "guild",
+        "_type",
+        "_state",
+        "_members",
+        "owner_id",
+        "parent_id",
+        "last_message_id",
+        "message_count",
+        "member_count",
+        "slowmode_delay",
+        "locked",
+        "archived",
+        "invitable",
+        "auto_archive_duration",
+        "archive_timestamp",
+        "_member_ids",
+        "_created_at",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -152,59 +152,63 @@ class Thread(Messageable, Hashable):
 
     def __repr__(self) -> str:
         return (
-            f'<Thread id={self.id!r} name={self.name!r} parent={self.parent}'
-            f' owner_id={self.owner_id!r} locked={self.locked} archived={self.archived}>'
+            f"<Thread id={self.id!r} name={self.name!r} parent={self.parent}"
+            f" owner_id={self.owner_id!r} locked={self.locked} archived={self.archived}>"
         )
 
     def __str__(self) -> str:
         return self.name
 
     def _from_data(self, data: ThreadPayload):
-        self.id = int(data['id'])
-        self.parent_id = int(data['parent_id'])
-        self.owner_id = int(data['owner_id'])
-        self.name = data['name']
-        self._type = try_enum(ChannelType, data['type'])
-        self.last_message_id = _get_as_snowflake(data, 'last_message_id')
-        self.slowmode_delay = data.get('rate_limit_per_user', 0)
-        self.message_count = data['message_count']
-        self.member_count = data['member_count']
-        self._member_ids = data['member_ids_preview']
-        self._unroll_metadata(data['thread_metadata'])
+        self.id = int(data["id"])
+        self.parent_id = int(data["parent_id"])
+        self.owner_id = int(data["owner_id"])
+        self.name = data["name"]
+        self._type = try_enum(ChannelType, data["type"])
+        self.last_message_id = _get_as_snowflake(data, "last_message_id")
+        self.slowmode_delay = data.get("rate_limit_per_user", 0)
+        self.message_count = data["message_count"]
+        self.member_count = data["member_count"]
+        self._member_ids = data["member_ids_preview"]
+        self._unroll_metadata(data["thread_metadata"])
 
         try:
-            member = data['member']
+            member = data["member"]
         except KeyError:
             pass
         else:
             self.me = ThreadMember(self, member)
 
     def _unroll_metadata(self, data: ThreadMetadata):
-        self.archived = data['archived']
-        self.auto_archive_duration = data['auto_archive_duration']
-        self.archive_timestamp = parse_time(data['archive_timestamp'])
-        self._created_at = parse_time(data.get('creation_timestamp'))
-        self.locked = data.get('locked', False)
-        self.invitable = data.get('invitable', True)
+        self.archived = data["archived"]
+        self.auto_archive_duration = data["auto_archive_duration"]
+        self.archive_timestamp = parse_time(data["archive_timestamp"])
+        self._created_at = parse_time(data.get("creation_timestamp"))
+        self.locked = data.get("locked", False)
+        self.invitable = data.get("invitable", True)
 
     def _update(self, data):
         old = copy.copy(self)
-        self.slowmode_delay = data.get('rate_limit_per_user', 0)
+        self.slowmode_delay = data.get("rate_limit_per_user", 0)
 
-        if (meta := data.get('thread_metadata')) is not None:
+        if (meta := data.get("thread_metadata")) is not None:
             self._unroll_metadata(meta)
-        if (name := data.get('name')) is not None:
+        if (name := data.get("name")) is not None:
             self.name = name
-        if (last_message_id := _get_as_snowflake(data, 'last_message_id')) is not None:
+        if (last_message_id := _get_as_snowflake(data, "last_message_id")) is not None:
             self.last_message_id = last_message_id
-        if (message_count := data.get('message_count')) is not None:
+        if (message_count := data.get("message_count")) is not None:
             self.message_count = message_count
-        if (member_count := data.get('member_count')) is not None:
+        if (member_count := data.get("member_count")) is not None:
             self.member_count = member_count
-        if (member_ids := data.get('member_ids_preview')) is not None:
+        if (member_ids := data.get("member_ids_preview")) is not None:
             self._member_ids = member_ids
 
-        attrs = [x for x in self.__slots__ if not any(y in x for y in ('member', 'guild', 'state', 'count'))]
+        attrs = [
+            x
+            for x in self.__slots__
+            if not any(y in x for y in ("member", "guild", "state", "count"))
+        ]
 
         if any(getattr(self, attr) != getattr(old, attr) for attr in attrs):
             return old
@@ -238,7 +242,7 @@ class Thread(Messageable, Hashable):
     @property
     def mention(self) -> str:
         """:class:`str`: The string that allows you to mention the thread."""
-        return f'<#{self.id}>'
+        return f"<#{self.id}>"
 
     @property
     def created_at(self) -> datetime:
@@ -277,7 +281,11 @@ class Thread(Messageable, Hashable):
         Optional[:class:`Message`]
             The last message in this channel or ``None`` if not found.
         """
-        return self._state._get_message(self.last_message_id) if self.last_message_id else None
+        return (
+            self._state._get_message(self.last_message_id)
+            if self.last_message_id
+            else None
+        )
 
     @property
     def category(self) -> Optional[CategoryChannel]:
@@ -296,9 +304,9 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.category
-    
+
     @property
     def category_id(self) -> Optional[int]:
         """The category channel ID the parent channel belongs to, if applicable.
@@ -316,7 +324,7 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.category_id
 
     @property
@@ -386,7 +394,7 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.permissions_for(obj)
 
     async def delete_messages(self, messages: Iterable[Snowflake]) -> None:
@@ -487,7 +495,13 @@ class Thread(Messageable, Hashable):
 
         state = self._state
         channel_id = self.id
-        iterator = self.history(limit=limit, before=before, after=after, oldest_first=oldest_first, around=around)
+        iterator = self.history(
+            limit=limit,
+            before=before,
+            after=after,
+            oldest_first=oldest_first,
+            around=around,
+        )
         ret: List[Message] = []
         count = 0
 
@@ -565,17 +579,17 @@ class Thread(Messageable, Hashable):
         """
         payload = {}
         if name is not MISSING:
-            payload['name'] = str(name)
+            payload["name"] = str(name)
         if archived is not MISSING:
-            payload['archived'] = archived
+            payload["archived"] = archived
         if auto_archive_duration is not MISSING:
-            payload['auto_archive_duration'] = auto_archive_duration
+            payload["auto_archive_duration"] = auto_archive_duration
         if locked is not MISSING:
-            payload['locked'] = locked
+            payload["locked"] = locked
         if invitable is not MISSING:
-            payload['invitable'] = invitable
+            payload["invitable"] = invitable
         if slowmode_delay is not MISSING:
-            payload['rate_limit_per_user'] = slowmode_delay
+            payload["rate_limit_per_user"] = slowmode_delay
 
         data = await self._state.http.edit_channel(self.id, **payload, reason=reason)
         # The data payload will always be a Thread payload
@@ -673,13 +687,15 @@ class Thread(Messageable, Hashable):
         """
         state = self._state
         await state.ws.request_lazy_guild(self.parent.guild.id, thread_member_lists=[self.id])  # type: ignore
-        future = state.ws.wait_for('thread_member_list_update', lambda d: int(d['thread_id']) == self.id)
+        future = state.ws.wait_for(
+            "thread_member_list_update", lambda d: int(d["thread_id"]) == self.id
+        )
         try:
             data = await asyncio.wait_for(future, timeout=15)
         except asyncio.TimeoutError as exc:
-            raise InvalidData('Didn\'t receieve a response from Discord') from exc
+            raise InvalidData("Didn't receieve a response from Discord") from exc
 
-        members = [ThreadMember(self, {'member': member}) for member in data['members']]
+        members = [ThreadMember(self, {"member": member}) for member in data["members"]]
         for m in members:
             self._add_member(m)
 
@@ -769,12 +785,12 @@ class ThreadMember(Hashable):
     """
 
     __slots__ = (
-        'id',
-        'thread_id',
-        'joined_at',
-        'flags',
-        '_state',
-        'parent',
+        "id",
+        "thread_id",
+        "joined_at",
+        "flags",
+        "_state",
+        "parent",
     )
 
     def __init__(self, parent: Thread, data: ThreadMemberPayload):
@@ -783,30 +799,30 @@ class ThreadMember(Hashable):
         self._from_data(data)
 
     def __repr__(self) -> str:
-        return f'<ThreadMember id={self.id} thread_id={self.thread_id} joined_at={self.joined_at!r}>'
+        return f"<ThreadMember id={self.id} thread_id={self.thread_id} joined_at={self.joined_at!r}>"
 
     def _from_data(self, data: ThreadMemberPayload):
         state = self._state
 
         try:
-            self.id = int(data['user_id'])
+            self.id = int(data["user_id"])
         except KeyError:
             assert state.self_id is not None
             self.id = state.self_id
 
         try:
-            self.thread_id = int(data['id'])
+            self.thread_id = int(data["id"])
         except KeyError:
             self.thread_id = self.parent.id
 
-        self.joined_at = parse_time(data.get('join_timestamp'))
-        self.flags = data.get('flags')
+        self.joined_at = parse_time(data.get("join_timestamp"))
+        self.flags = data.get("flags")
 
-        if (mdata := data.get('member')) is not None:
+        if (mdata := data.get("member")) is not None:
             guild = self.parent.parent.guild  # type: ignore
-            mdata['guild_id'] = guild.id
-            self.id = user_id = int(data['user_id'])
-            mdata['presence'] = data.get('presence')
+            mdata["guild_id"] = guild.id
+            self.id = user_id = int(data["user_id"])
+            mdata["presence"] = data.get("presence")
             if guild.get_member(user_id) is not None:
                 state.parse_guild_member_update(mdata)
             else:

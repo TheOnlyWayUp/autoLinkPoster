@@ -47,9 +47,10 @@ if TYPE_CHECKING:
 def _running_only(func):
     def decorator(self, *args, **kwargs):
         if self._ended:
-            raise ClientException('Call is over')
+            raise ClientException("Call is over")
         else:
             return func(self, *args, **kwargs)
+
     return decorator
 
 
@@ -188,12 +189,16 @@ class PrivateCall:
         """List[:class:`User`]: Returns all users that are currently in this call."""
         channel = self.channel
         recipients = {channel.me, channel.recipient}
-        ret = [u for u in recipients if self.voice_state_for(u).channel.id == self._channel_id]
+        ret = [
+            u
+            for u in recipients
+            if self.voice_state_for(u).channel.id == self._channel_id
+        ]
 
         return ret
 
     @property
-    def voice_states(self)  -> List[VoiceState]:
+    def voice_states(self) -> List[VoiceState]:
         """Mapping[:class:`int`, :class:`VoiceState`]: Returns a mapping of user IDs who have voice states in this call."""
         return set(self._voice_states)
 
@@ -301,7 +306,11 @@ class GroupCall(PrivateCall):
     @property
     def members(self) -> List[User]:
         """List[:class:`User`]: Returns all users that are currently in this call."""
-        ret = [u for u in self.channel.recipients if self.voice_state_for(u).channel.id == self._channel_id]
+        ret = [
+            u
+            for u in self.channel.recipients
+            if self.voice_state_for(u).channel.id == self._channel_id
+        ]
         me = self.channel.me
         if self.voice_state_for(me).channel.id == self._channel_id:
             ret.append(me)
@@ -314,7 +323,9 @@ class GroupCall(PrivateCall):
 
     @_running_only
     async def stop_ringing(self, *recipients) -> None:
-        await self._state.http.stop_ringing(self._channel_id, *{r.id for r in recipients})
+        await self._state.http.stop_ringing(
+            self._channel_id, *{r.id for r in recipients}
+        )
 
 
 Call = Union[PrivateCall, GroupCall]

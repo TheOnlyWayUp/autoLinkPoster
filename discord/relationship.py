@@ -48,16 +48,16 @@ class Relationship:
         The type of relationship you have.
     """
 
-    __slots__ = ('nickname', 'type', 'user', '_state')
+    __slots__ = ("nickname", "type", "user", "_state")
 
     def __init__(self, *, state: ConnectionState, data) -> None:  # TODO: type data
         self._state = state
-        self.type: RelationshipType = try_enum(RelationshipType, data['type'])
-        self.user: User = state.store_user(data['user'])
-        self.nickname: Optional[str] = data.get('nickname', None)
+        self.type: RelationshipType = try_enum(RelationshipType, data["type"])
+        self.user: User = state.store_user(data["user"])
+        self.nickname: Optional[str] = data.get("nickname", None)
 
     def __repr__(self) -> str:
-        return f'<Relationship user={self.user!r} type={self.type!r}>'
+        return f"<Relationship user={self.user!r} type={self.type!r}>"
 
     async def delete(self) -> None:
         """|coro|
@@ -70,13 +70,21 @@ class Relationship:
             Deleting the relationship failed.
         """
         if self.type is RelationshipType.friend:
-            await self._state.http.remove_relationship(self.user.id, action=RelationshipAction.unfriend)
+            await self._state.http.remove_relationship(
+                self.user.id, action=RelationshipAction.unfriend
+            )
         elif self.type is RelationshipType.blocked:
-            await self._state.http.remove_relationship(self.user.id, action=RelationshipAction.unblock)
+            await self._state.http.remove_relationship(
+                self.user.id, action=RelationshipAction.unblock
+            )
         elif self.type is RelationshipType.incoming_request:
-            await self._state.http.remove_relationship(self.user.id, action=RelationshipAction.deny_request)
+            await self._state.http.remove_relationship(
+                self.user.id, action=RelationshipAction.deny_request
+            )
         elif self.type is RelationshipType.outgoing_request:
-            await self._state.http.remove_relationship(self.user.id, action=RelationshipAction.remove_pending_request)
+            await self._state.http.remove_relationship(
+                self.user.id, action=RelationshipAction.remove_pending_request
+            )
 
     async def accept(self) -> None:
         """|coro|
@@ -89,7 +97,9 @@ class Relationship:
         HTTPException
             Accepting the relationship failed.
         """
-        await self._state.http.add_relationship(self.user.id, action=RelationshipAction.accept_request)
+        await self._state.http.add_relationship(
+            self.user.id, action=RelationshipAction.accept_request
+        )
 
     async def change_nickname(self, nick: Optional[str]) -> None:
         """|coro|

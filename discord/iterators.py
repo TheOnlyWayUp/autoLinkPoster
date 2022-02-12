@@ -26,7 +26,19 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-from typing import Awaitable, TYPE_CHECKING, TypeVar, Optional, Any, Callable, Union, List, Tuple, AsyncIterator, Dict
+from typing import (
+    Awaitable,
+    TYPE_CHECKING,
+    TypeVar,
+    Optional,
+    Any,
+    Callable,
+    Union,
+    List,
+    Tuple,
+    AsyncIterator,
+    Dict,
+)
 
 from .errors import InvalidData, NoMoreItems
 from .utils import snowflake_time, time_snowflake, maybe_coroutine, utcnow
@@ -37,11 +49,11 @@ from .enums import CommandType
 from .errors import InvalidArgument
 
 __all__ = (
-    'ReactionIterator',
-    'HistoryIterator',
-    'AuditLogIterator',
-    'CommandIterator',
-    'FakeCommandIterator',
+    "ReactionIterator",
+    "HistoryIterator",
+    "AuditLogIterator",
+    "CommandIterator",
+    "FakeCommandIterator",
 )
 
 if TYPE_CHECKING:
@@ -71,8 +83,8 @@ if TYPE_CHECKING:
     from .commands import ApplicationCommand
     from .channel import DMChannel
 
-T = TypeVar('T')
-OT = TypeVar('OT')
+T = TypeVar("T")
+OT = TypeVar("OT")
 _Func = Callable[[T], Union[OT, Awaitable[OT]]]
 
 OLDEST_OBJECT = Object(id=0)
@@ -87,7 +99,7 @@ class _AsyncIterator(AsyncIterator[T]):
     def get(self, **attrs: Any) -> Awaitable[Optional[T]]:
         def predicate(elem: T):
             for attr, val in attrs.items():
-                nested = attr.split('__')
+                nested = attr.split("__")
                 obj = elem
                 for attribute in nested:
                     obj = getattr(obj, attribute)
@@ -111,7 +123,7 @@ class _AsyncIterator(AsyncIterator[T]):
 
     def chunk(self, max_size: int) -> _ChunkedAsyncIterator[T]:
         if max_size <= 0:
-            raise ValueError('Chunk size must be greater than 0')
+            raise ValueError("Chunk size must be greater than 0")
         return _ChunkedAsyncIterator(self, max_size)
 
     def map(self, func: _Func[T, OT]) -> _MappedAsyncIterator[OT]:
@@ -186,7 +198,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
                 return item
 
 
-class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
+class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     def __init__(self, message, emoji, limit=100, after=None):
         self.message = message
         self.limit = limit
@@ -222,14 +234,14 @@ class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
 
             if data:
                 self.limit -= retrieve
-                self.after = Object(id=int(data[-1]['id']))
+                self.after = Object(id=int(data[-1]["id"]))
 
             if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
                     await self.users.put(User(state=self.state, data=element))
             else:
                 for element in reversed(data):
-                    member_id = int(element['id'])
+                    member_id = int(element["id"])
                     member = self.guild.get_member(member_id)
                     if member is not None:
                         await self.users.put(member)
@@ -237,7 +249,7 @@ class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
                         await self.users.put(User(state=self.state, data=element))
 
 
-class HistoryIterator(_AsyncIterator['Message']):
+class HistoryIterator(_AsyncIterator["Message"]):
     """Iterator for receiving a channel's message history.
 
     The messages endpoint has two behaviours we care about here:
@@ -271,7 +283,15 @@ class HistoryIterator(_AsyncIterator['Message']):
         ``True`` if `after` is specified, otherwise ``False``.
     """
 
-    def __init__(self, messageable, limit, before=None, after=None, around=None, oldest_first=None):
+    def __init__(
+        self,
+        messageable,
+        limit,
+        before=None,
+        after=None,
+        around=None,
+        oldest_first=None,
+    ):
 
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
@@ -299,28 +319,30 @@ class HistoryIterator(_AsyncIterator['Message']):
 
         if self.around:
             if self.limit is None:
-                raise ValueError('history does not support around with limit=None')
+                raise ValueError("history does not support around with limit=None")
             if self.limit > 101:
-                raise ValueError("history max limit 101 when specifying around parameter")
+                raise ValueError(
+                    "history max limit 101 when specifying around parameter"
+                )
             elif self.limit == 101:
                 self.limit = 100  # Thanks Discord
 
             self._retrieve_messages = self._retrieve_messages_around_strategy  # type: ignore
             if self.before and self.after:
-                self._filter = lambda m: self.after.id < int(m['id']) < self.before.id
+                self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id
             elif self.before:
-                self._filter = lambda m: int(m['id']) < self.before.id
+                self._filter = lambda m: int(m["id"]) < self.before.id
             elif self.after:
-                self._filter = lambda m: self.after.id < int(m['id'])
+                self._filter = lambda m: self.after.id < int(m["id"])
         else:
             if self.reverse:
                 self._retrieve_messages = self._retrieve_messages_after_strategy  # type: ignore
                 if self.before:
-                    self._filter = lambda m: int(m['id']) < self.before.id
+                    self._filter = lambda m: int(m["id"]) < self.before.id
             else:
                 self._retrieve_messages = self._retrieve_messages_before_strategy  # type: ignore
                 if self.after and self.after != OLDEST_OBJECT:
-                    self._filter = lambda m: int(m['id']) > self.after.id
+                    self._filter = lambda m: int(m["id"]) > self.after.id
 
     async def next(self) -> Message:
         if self.messages.empty():
@@ -341,7 +363,7 @@ class HistoryIterator(_AsyncIterator['Message']):
         return r > 0
 
     async def fill_messages(self):
-        if not hasattr(self, 'channel'): # Do the required set up
+        if not hasattr(self, "channel"):  # Do the required set up
             channel = await self.messageable._get_channel()
             self.channel = channel
 
@@ -357,7 +379,9 @@ class HistoryIterator(_AsyncIterator['Message']):
 
             channel = self.channel
             for element in data:
-                await self.messages.put(self.state.create_message(channel=channel, data=element))
+                await self.messages.put(
+                    self.state.create_message(channel=channel, data=element)
+                )
 
     async def _retrieve_messages(self, retrieve) -> List[Message]:
         """Retrieve messages and update next parameters."""
@@ -366,35 +390,50 @@ class HistoryIterator(_AsyncIterator['Message']):
     async def _retrieve_messages_before_strategy(self, retrieve):
         """Retrieve messages using before parameter."""
         before = self.before.id if self.before else None
-        data: List[MessagePayload] = await self.logs_from(self.channel.id, retrieve, before=before)
+        data: List[MessagePayload] = await self.logs_from(
+            self.channel.id, retrieve, before=before
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(data[-1]['id']))
+            self.before = Object(id=int(data[-1]["id"]))
         return data
 
     async def _retrieve_messages_after_strategy(self, retrieve):
         """Retrieve messages using after parameter."""
         after = self.after.id if self.after else None
-        data: List[MessagePayload] = await self.logs_from(self.channel.id, retrieve, after=after)
+        data: List[MessagePayload] = await self.logs_from(
+            self.channel.id, retrieve, after=after
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(data[0]['id']))
+            self.after = Object(id=int(data[0]["id"]))
         return data
 
     async def _retrieve_messages_around_strategy(self, retrieve):
         """Retrieve messages using around parameter."""
         if self.around:
             around = self.around.id if self.around else None
-            data: List[MessagePayload] = await self.logs_from(self.channel.id, retrieve, around=around)
+            data: List[MessagePayload] = await self.logs_from(
+                self.channel.id, retrieve, around=around
+            )
             self.around = None
             return data
         return []
 
 
-class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
-    def __init__(self, guild, limit=None, before=None, after=None, oldest_first=None, user_id=None, action_type=None):
+class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
+    def __init__(
+        self,
+        guild,
+        limit=None,
+        before=None,
+        after=None,
+        oldest_first=None,
+        user_id=None,
+        action_type=None,
+    ):
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
@@ -423,36 +462,44 @@ class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
         if self.reverse:
             self._strategy = self._after_strategy
             if self.before:
-                self._filter = lambda m: int(m['id']) < self.before.id
+                self._filter = lambda m: int(m["id"]) < self.before.id
         else:
             self._strategy = self._before_strategy
             if self.after and self.after != OLDEST_OBJECT:
-                self._filter = lambda m: int(m['id']) > self.after.id
+                self._filter = lambda m: int(m["id"]) > self.after.id
 
     async def _before_strategy(self, retrieve):
         before = self.before.id if self.before else None
         data: AuditLogPayload = await self.request(
-            self.guild.id, limit=retrieve, user_id=self.user_id, action_type=self.action_type, before=before
+            self.guild.id,
+            limit=retrieve,
+            user_id=self.user_id,
+            action_type=self.action_type,
+            before=before,
         )
 
-        entries = data.get('audit_log_entries', [])
+        entries = data.get("audit_log_entries", [])
         if len(data) and entries:
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(entries[-1]['id']))
-        return data.get('users', []), entries
+            self.before = Object(id=int(entries[-1]["id"]))
+        return data.get("users", []), entries
 
     async def _after_strategy(self, retrieve):
         after = self.after.id if self.after else None
         data: AuditLogPayload = await self.request(
-            self.guild.id, limit=retrieve, user_id=self.user_id, action_type=self.action_type, after=after
+            self.guild.id,
+            limit=retrieve,
+            user_id=self.user_id,
+            action_type=self.action_type,
+            after=after,
         )
-        entries = data.get('audit_log_entries', [])
+        entries = data.get("audit_log_entries", [])
         if len(data) and entries:
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(entries[0]['id']))
-        return data.get('users', []), entries
+            self.after = Object(id=int(entries[0]["id"]))
+        return data.get("users", []), entries
 
     async def next(self) -> AuditLogEntry:
         if self.entries.empty():
@@ -491,13 +538,15 @@ class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
 
             for element in data:
                 # TODO: remove this if statement later
-                if element['action_type'] is None:
+                if element["action_type"] is None:
                     continue
 
-                await self.entries.put(AuditLogEntry(data=element, users=self._users, guild=self.guild))
+                await self.entries.put(
+                    AuditLogEntry(data=element, users=self._users, guild=self.guild)
+                )
 
 
-class ArchivedThreadIterator(_AsyncIterator['Thread']):
+class ArchivedThreadIterator(_AsyncIterator["Thread"]):
     def __init__(
         self,
         channel_id: int,
@@ -515,7 +564,7 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         self.http = guild._state.http
 
         if joined and not private:
-            raise ValueError('Cannot iterate over joined public archived threads')
+            raise ValueError("Cannot iterate over joined public archived threads")
 
         self.before: Optional[str]
         if before is None:
@@ -555,11 +604,11 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
 
     @staticmethod
     def get_archive_timestamp(data: ThreadPayload) -> str:
-        return data['thread_metadata']['archive_timestamp']
+        return data["thread_metadata"]["archive_timestamp"]
 
     @staticmethod
     def get_thread_id(data: ThreadPayload) -> str:
-        return data['id']  # type: ignore
+        return data["id"]  # type: ignore
 
     async def fill_queue(self) -> None:
         if not self.has_more:
@@ -569,11 +618,11 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         data = await self.endpoint(self.channel_id, before=self.before, limit=limit)
 
         # This stuff is obviously WIP because 'members' is always empty
-        threads: List[ThreadPayload] = data.get('threads', [])
+        threads: List[ThreadPayload] = data.get("threads", [])
         for d in reversed(threads):
             self.queue.put_nowait(self.create_thread(d))
 
-        self.has_more = data.get('has_more', False)
+        self.has_more = data.get("has_more", False)
         if self.limit is not None:
             self.limit -= len(threads)
             if self.limit <= 0:
@@ -584,10 +633,13 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
 
     def create_thread(self, data: ThreadPayload) -> Thread:
         from .threads import Thread
+
         return Thread(guild=self.guild, state=self.guild._state, data=data)
 
 
-def _is_fake(item: Union[Messageable, Message]) -> bool:  # I hate this too, but <circular imports> and performance exist
+def _is_fake(
+    item: Union[Messageable, Message]
+) -> bool:  # I hate this too, but <circular imports> and performance exist
     try:
         item.guild  # type: ignore
     except AttributeError:
@@ -599,7 +651,7 @@ def _is_fake(item: Union[Messageable, Message]) -> bool:  # I hate this too, but
     return True
 
 
-class CommandIterator(_AsyncIterator['ApplicationCommand']):
+class CommandIterator(_AsyncIterator["ApplicationCommand"]):
     def __new__(cls, *args, **kwargs) -> Union[CommandIterator, FakeCommandIterator]:
         if _is_fake(args[0]):
             return FakeCommandIterator(*args)
@@ -624,23 +676,25 @@ class CommandIterator(_AsyncIterator['ApplicationCommand']):
         self.query = query
         self.limit = limit
         self.command_ids = command_ids
-        self.applications: bool = kwargs.get('applications', True)
-        self.application: Snowflake = kwargs.get('application', None)
+        self.applications: bool = kwargs.get("applications", True)
+        self.application: Snowflake = kwargs.get("application", None)
         self.commands = asyncio.Queue()
 
-    async def _process_args(self) -> Tuple[DMChannel, Optional[str], Optional[Union[User, Message]]]:
+    async def _process_args(
+        self,
+    ) -> Tuple[DMChannel, Optional[str], Optional[Union[User, Message]]]:
         item = self.item
         if self.type is CommandType.user:
             channel = await item._get_channel()  # type: ignore
-            if getattr(item, 'bot', None):
+            if getattr(item, "bot", None):
                 item = item
             else:
                 item = None
-            text = 'user'
+            text = "user"
         elif self.type is CommandType.message:
             message = self.item
             channel = message.channel  # type: ignore
-            text = 'message'
+            text = "message"
         elif self.type is CommandType.chat_input:
             channel = await item._get_channel()  # type: ignore
             item = None
@@ -650,18 +704,18 @@ class CommandIterator(_AsyncIterator['ApplicationCommand']):
 
     def _process_kwargs(self, channel) -> None:
         kwargs = {
-            'guild_id': channel.guild.id,
-            'type': self.type.value,
-            'offset': 0,
+            "guild_id": channel.guild.id,
+            "type": self.type.value,
+            "offset": 0,
         }
         if self.applications:
-            kwargs['applications'] = True  # Only sent if it's True...
-        if (app := self.application):
-            kwargs['application'] = app.id
+            kwargs["applications"] = True  # Only sent if it's True...
+        if app := self.application:
+            kwargs["application"] = app.id
         if (query := self.query) is not None:
-            kwargs['query'] = query
-        if (cmds := self.command_ids):
-            kwargs['command_ids'] = cmds
+            kwargs["query"] = query
+        if cmds := self.command_ids:
+            kwargs["command_ids"] = cmds
         self.kwargs = kwargs
 
     async def next(self) -> ApplicationCommand:
@@ -695,31 +749,34 @@ class CommandIterator(_AsyncIterator['ApplicationCommand']):
         nonce = str(time_snowflake(utcnow()))
 
         def predicate(d):
-            return d.get('nonce') == nonce
+            return d.get("nonce") == nonce
 
         data = None
         for _ in range(3):
             await state.ws.request_commands(**kwargs, limit=retrieve, nonce=nonce)
             try:
-                data: Optional[Dict[str, Any]] = await asyncio.wait_for(state.ws.wait_for('guild_application_commands_update', predicate), timeout=3)
+                data: Optional[Dict[str, Any]] = await asyncio.wait_for(
+                    state.ws.wait_for("guild_application_commands_update", predicate),
+                    timeout=3,
+                )
             except asyncio.TimeoutError:
                 pass
 
         if data is None:
-            raise InvalidData('Didn\'t receive a response from Discord')
+            raise InvalidData("Didn't receive a response from Discord")
 
-        cmds = data['application_commands']
+        cmds = data["application_commands"]
         if len(cmds) < retrieve:
             self.limit = 0
         elif self.limit is not None:
             self.limit -= retrieve
 
-        kwargs['offset'] += retrieve
+        kwargs["offset"] += retrieve
 
         for cmd in cmds:
             self.commands.put_nowait(self.create_command(cmd))
 
-        for app in data.get('applications', []):
+        for app in data.get("applications", []):
             ...
 
     def create_command(self, data) -> ApplicationCommand:
@@ -731,7 +788,7 @@ class CommandIterator(_AsyncIterator['ApplicationCommand']):
         return self.cls(state=channel._state, data=data, channel=channel, **kwargs)
 
 
-class FakeCommandIterator(_AsyncIterator['ApplicationCommand']):
+class FakeCommandIterator(_AsyncIterator["ApplicationCommand"]):
     def __init__(
         self,
         item: Union[User, Message, DMChannel],
@@ -751,25 +808,27 @@ class FakeCommandIterator(_AsyncIterator['ApplicationCommand']):
         self.has_more = False
         self.commands = asyncio.Queue()
 
-    async def _process_args(self) -> Tuple[DMChannel, Optional[str], Optional[Union[User, Message]]]:
+    async def _process_args(
+        self,
+    ) -> Tuple[DMChannel, Optional[str], Optional[Union[User, Message]]]:
         item = self.item
         if self.type is CommandType.user:
             channel = await item._get_channel()  # type: ignore
-            if getattr(item, 'bot', None):
+            if getattr(item, "bot", None):
                 item = item
             else:
                 item = None
-            text = 'user'
+            text = "user"
         elif self.type is CommandType.message:
             message = self.item
             channel = message.channel  # type: ignore
-            text = 'message'
+            text = "message"
         elif self.type is CommandType.chat_input:
             channel = await item._get_channel()  # type: ignore
             item = None
             text = None
         if not channel.recipient.bot:
-            raise InvalidArgument('User is not a bot')
+            raise InvalidArgument("User is not a bot")
         return channel, text, item  # type: ignore
 
     async def next(self) -> ApplicationCommand:
@@ -797,15 +856,15 @@ class FakeCommandIterator(_AsyncIterator['ApplicationCommand']):
         type = self.type.value
 
         for cmd in data:
-            if cmd['type'] != type:
+            if cmd["type"] != type:
                 continue
 
             if ids:
-                if not int(cmd['id']) in ids:
+                if not int(cmd["id"]) in ids:
                     continue
 
             if query:
-                if not query in cmd['name'].lower():
+                if not query in cmd["name"].lower():
                     continue
 
             self.commands.put_nowait(self.create_command(cmd))

@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .voice_client import VoiceClient
 
-unpacker = struct.Struct('>xxHII')
+unpacker = struct.Struct(">xxHII")
 
 
 class SSRC:
