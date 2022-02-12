@@ -1,6 +1,6 @@
 version = 1
 
-exclude_patterns = ["discord"]
+exclude_patterns = ["discord", "discord/*", "discord/ext", "discord/ext/*", "discord/ext/commands", "discord/ext/commands/*", "discord/bin/*", "discord/types/*", "discord/webhook/*"]
 
 [[analyzers]]
 name = "python"
