@@ -29,11 +29,13 @@ from typing import TypedDict, List, Optional
 from .user import User
 from .snowflake import Snowflake
 
+
 class TeamMember(TypedDict):
     user: User
     membership_state: int
     permissions: List[str]
     team_id: Snowflake
+
 
 class Team(TypedDict):
     id: Snowflake
