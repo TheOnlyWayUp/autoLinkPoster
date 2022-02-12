@@ -29,14 +29,30 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, TYPE_CHECKIN
 import discord.abc
 from .asset import Asset
 from .colour import Colour
-from .enums import CommandType, DefaultAvatar, HypeSquadHouse, PremiumType, RelationshipAction, RelationshipType, try_enum, UserFlags
+from .enums import (
+    CommandType,
+    DefaultAvatar,
+    HypeSquadHouse,
+    PremiumType,
+    RelationshipAction,
+    RelationshipType,
+    try_enum,
+    UserFlags,
+)
 from .errors import ClientException, InvalidArgument, NotFound
 from .flags import PublicUserFlags
 from .iterators import FakeCommandIterator
 from .object import Object
 from .relationship import Relationship
 from .settings import UserSettings
-from .utils import _bytes_to_base64_data, _get_as_snowflake, cached_slot_property, copy_doc, snowflake_time, MISSING
+from .utils import (
+    _bytes_to_base64_data,
+    _get_as_snowflake,
+    cached_slot_property,
+    copy_doc,
+    snowflake_time,
+    MISSING,
+)
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -55,20 +71,26 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'User',
-    'ClientUser',
-    'Note',
+    "User",
+    "ClientUser",
+    "Note",
 )
 
-BU = TypeVar('BU', bound='BaseUser')
+BU = TypeVar("BU", bound="BaseUser")
 
 
 class Note:
     """Represents a Discord note."""
-    __slots__ = ('_state', '_note', '_user_id', '_user')
+
+    __slots__ = ("_state", "_note", "_user_id", "_user")
 
     def __init__(
-        self, state: ConnectionState, user_id: int, *, user: _Snowflake = MISSING, note: Optional[str] = MISSING
+        self,
+        state: ConnectionState,
+        user_id: int,
+        *,
+        user: _Snowflake = MISSING,
+        note: Optional[str] = MISSING,
     ) -> None:
         self._state = state
         self._user_id = user_id
@@ -86,10 +108,10 @@ class Note:
             Attempted to access note without fetching it.
         """
         if self._note is MISSING:
-            raise ClientException('Note is not fetched')
+            raise ClientException("Note is not fetched")
         return self._note
 
-    @cached_slot_property('_user')
+    @cached_slot_property("_user")
     def user(self) -> _Snowflake:
         """:class:`Snowflake`: Returns the :class:`User` the note belongs to.
 
@@ -120,8 +142,8 @@ class Note:
         """
         try:
             data = await self._state.http.get_note(self.user.id)
-            self._note = data['note']
-            return data['note']
+            self._note = data["note"]
+            return data["note"]
         except NotFound:  # 404 = no note
             self._note = None
             return None
@@ -154,28 +176,32 @@ class Note:
     def __str__(self) -> str:
         note = self._note
         if note is MISSING:
-            raise ClientException('Note is not fetched')
+            raise ClientException("Note is not fetched")
         elif note is None:
-            return ''
+            return ""
         else:
             return note
 
     def __repr__(self) -> str:
-        base = f'<Note user={self.user!r}'
+        base = f"<Note user={self.user!r}"
         note = self._note
         if note is not MISSING:
             note = note or '""'
-            base += f' note={note}'
-        return base + '>'
+            base += f" note={note}"
+        return base + ">"
 
     def __len__(self) -> int:
-        if (note := self._note):
+        if note := self._note:
             return len(note)
         return 0
 
     def __eq__(self, other: Note) -> bool:
         try:
-            return isinstance(other, Note) and self._note == other._note and self._user_id == other._user_id
+            return (
+                isinstance(other, Note)
+                and self._note == other._note
+                and self._user_id == other._user_id
+            )
         except TypeError:
             return False
 
@@ -196,16 +222,16 @@ class _UserTag:
 
 class BaseUser(_UserTag):
     __slots__ = (
-        'name',
-        'id',
-        'discriminator',
-        '_avatar',
-        '_banner',
-        '_accent_colour',
-        'bot',
-        'system',
-        '_public_flags',
-        '_state',
+        "name",
+        "id",
+        "discriminator",
+        "_avatar",
+        "_banner",
+        "_accent_colour",
+        "bot",
+        "system",
+        "_public_flags",
+        "_state",
     )
 
     if TYPE_CHECKING:
@@ -231,7 +257,7 @@ class BaseUser(_UserTag):
         )
 
     def __str__(self) -> str:
-        return f'{self.name}#{self.discriminator}'
+        return f"{self.name}#{self.discriminator}"
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, _UserTag) and other.id == self.id
@@ -243,15 +269,15 @@ class BaseUser(_UserTag):
         return self.id >> 22
 
     def _update(self, data: UserPayload) -> None:
-        self.name = data['username']
-        self.id = int(data['id'])
-        self.discriminator = data['discriminator']
-        self._avatar = data['avatar']
-        self._banner = data.get('banner', None)
-        self._accent_colour = data.get('accent_color', None)
-        self._public_flags = data.get('public_flags', 0)
-        self.bot = data.get('bot', False)
-        self.system = data.get('system', False)
+        self.name = data["username"]
+        self.id = int(data["id"])
+        self.discriminator = data["discriminator"]
+        self._avatar = data["avatar"]
+        self._banner = data.get("banner", None)
+        self._accent_colour = data.get("accent_color", None)
+        self._public_flags = data.get("public_flags", 0)
+        self.bot = data.get("bot", False)
+        self.system = data.get("system", False)
 
     @classmethod
     def _copy(cls: Type[BU], user: BU) -> BU:
@@ -271,12 +297,12 @@ class BaseUser(_UserTag):
 
     def _to_minimal_user_json(self) -> Dict[str, Any]:
         return {
-            'username': self.name,
-            'id': self.id,
-            'avatar': self._avatar,
-            'discriminator': self.discriminator,
-            'bot': self.bot,
-            'system': self.system,
+            "username": self.name,
+            "id": self.id,
+            "avatar": self._avatar,
+            "discriminator": self.discriminator,
+            "bot": self.bot,
+            "system": self.system,
         }
 
     @property
@@ -303,7 +329,9 @@ class BaseUser(_UserTag):
     @property
     def default_avatar(self) -> Asset:
         """:class:`Asset`: Returns the default avatar for a given user. This is calculated by the user's discriminator."""
-        return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
+        return Asset._from_default_avatar(
+            self._state, int(self.discriminator) % len(DefaultAvatar)
+        )
 
     @property
     def display_avatar(self) -> Asset:
@@ -380,7 +408,7 @@ class BaseUser(_UserTag):
     @property
     def mention(self) -> str:
         """:class:`str`: Returns a string that allows you to mention the given user."""
-        return f'<@{self.id}>'
+        return f"<@{self.id}>"
 
     @property
     def created_at(self) -> datetime:
@@ -485,17 +513,17 @@ class ClientUser(BaseUser):
     """
 
     __slots__ = (
-        'locale',
-        '_flags',
-        'verified',
-        'mfa_enabled',
-        'email',
-        'phone',
-        'premium_type',
-        'note',
-        'premium',
-        'bio',
-        'nsfw_allowed',
+        "locale",
+        "_flags",
+        "verified",
+        "mfa_enabled",
+        "email",
+        "phone",
+        "premium_type",
+        "note",
+        "premium",
+        "bio",
+        "nsfw_allowed",
     )
 
     if TYPE_CHECKING:
@@ -516,22 +544,22 @@ class ClientUser(BaseUser):
 
     def __repr__(self) -> str:
         return (
-            f'<ClientUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}'
-            f' bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled} premium={self.premium}>'
+            f"<ClientUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
+            f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled} premium={self.premium}>"
         )
 
     def _update(self, data: UserPayload) -> None:
         super()._update(data)
-        self.verified = data.get('verified', False)
-        self.email = data.get('email')
-        self.phone = _get_as_snowflake(data, 'phone')
-        self.locale = data.get('locale')
-        self._flags = data.get('flags', 0)
-        self.mfa_enabled = data.get('mfa_enabled', False)
-        self.premium = data.get('premium', False)
-        self.premium_type = try_enum(PremiumType, data.get('premium_type', None))
-        self.bio = data.get('bio') or None
-        self.nsfw_allowed = data.get('nsfw_allowed', False)
+        self.verified = data.get("verified", False)
+        self.email = data.get("email")
+        self.phone = _get_as_snowflake(data, "phone")
+        self.locale = data.get("locale")
+        self._flags = data.get("flags", 0)
+        self.mfa_enabled = data.get("mfa_enabled", False)
+        self.premium = data.get("premium", False)
+        self.premium_type = try_enum(PremiumType, data.get("premium_type", None))
+        self.bio = data.get("bio") or None
+        self.nsfw_allowed = data.get("nsfw_allowed", False)
 
     def get_relationship(self, user_id: int) -> Relationship:
         """Retrieves the :class:`Relationship` if applicable.
@@ -556,12 +584,20 @@ class ClientUser(BaseUser):
     @property
     def friends(self) -> List[Relationship]:
         r"""List[:class:`User`]: Returns all the users that the user is friends with."""
-        return [r.user for r in self._state._relationships.values() if r.type is RelationshipType.friend]
+        return [
+            r.user
+            for r in self._state._relationships.values()
+            if r.type is RelationshipType.friend
+        ]
 
     @property
     def blocked(self) -> List[Relationship]:
         r"""List[:class:`User`]: Returns all the users that the user has blocked."""
-        return [r.user for r in self._state._relationships.values() if r.type is RelationshipType.blocked]
+        return [
+            r.user
+            for r in self._state._relationships.values()
+            if r.type is RelationshipType.blocked
+        ]
 
     @property
     def settings(self) -> Optional[UserSettings]:
@@ -646,51 +682,54 @@ class ClientUser(BaseUser):
         """
         args: Dict[str, Any] = {}
 
-        if any(x is not MISSING for x in ('new_password', 'email', 'username', 'discriminator')):
+        if any(
+            x is not MISSING
+            for x in ("new_password", "email", "username", "discriminator")
+        ):
             if password is MISSING:
-                raise ClientException('Password is required')
-            args['password'] = password
+                raise ClientException("Password is required")
+            args["password"] = password
 
         if avatar is not MISSING:
             if avatar is not None:
-                args['avatar'] = _bytes_to_base64_data(avatar)
+                args["avatar"] = _bytes_to_base64_data(avatar)
             else:
-                args['avatar'] = None
+                args["avatar"] = None
 
         if banner is not MISSING:
             if banner is not None:
-                args['banner'] = _bytes_to_base64_data(banner)
+                args["banner"] = _bytes_to_base64_data(banner)
             else:
-                args['banner'] = None
+                args["banner"] = None
 
         if accent_color is not MISSING or accent_colour is not MISSING:
             colour = accent_colour if accent_colour is not MISSING else accent_color
             if colour is None:
-                args['accent_color'] = colour
+                args["accent_color"] = colour
             elif not isinstance(colour, Colour):
-                raise ClientException('`accent_colo(u)r` parameter was not a Colour')
+                raise ClientException("`accent_colo(u)r` parameter was not a Colour")
             else:
-                args['accent_color'] = accent_color.value
+                args["accent_color"] = accent_color.value
 
         if email is not MISSING:
-            args['email'] = email
+            args["email"] = email
 
         if username is not MISSING:
-            args['username'] = username
+            args["username"] = username
 
         if discriminator is not MISSING:
-            args['discriminator'] = discriminator
+            args["discriminator"] = discriminator
 
         if new_password is not MISSING:
-            args['new_password'] = new_password
+            args["new_password"] = new_password
 
         if bio is not MISSING:
-            args['bio'] = bio or ''
+            args["bio"] = bio or ""
 
         if date_of_birth is not MISSING:
             if not isinstance(date_of_birth, datetime):
-                raise ClientException('`date_of_birth` parameter was not a datetime')
-            args['date_of_birth'] = date_of_birth.strftime('%F')
+                raise ClientException("`date_of_birth` parameter was not a datetime")
+            args["date_of_birth"] = date_of_birth.strftime("%F")
 
         http = self._state.http
 
@@ -698,13 +737,13 @@ class ClientUser(BaseUser):
             if house is None:
                 await http.leave_hypesquad_house()
             elif not isinstance(house, HypeSquadHouse):
-                raise ClientException('`house` parameter was not a HypeSquadHouse')
+                raise ClientException("`house` parameter was not a HypeSquadHouse")
             else:
                 await http.change_hypesquad_house(house.value)
 
         data = await http.edit_profile(args)
         try:
-            http._token(data['token'])
+            http._token(data["token"])
         except KeyError:
             pass
 
@@ -733,42 +772,46 @@ class ClientUser(BaseUser):
         return UserSettings(data=data, state=self._state)
 
     @copy_doc(UserSettings.edit)
-    async def edit_settings(self, **kwargs) -> UserSettings:  # TODO: I really wish I didn't have to do this...
+    async def edit_settings(
+        self, **kwargs
+    ) -> UserSettings:  # TODO: I really wish I didn't have to do this...
         payload = {}
 
-        content_filter = kwargs.pop('explicit_content_filter', None)
+        content_filter = kwargs.pop("explicit_content_filter", None)
         if content_filter:
-            payload['explicit_content_filter'] = content_filter.value
+            payload["explicit_content_filter"] = content_filter.value
 
-        animate_stickers = kwargs.pop('animate_stickers', None)
+        animate_stickers = kwargs.pop("animate_stickers", None)
         if animate_stickers:
-            payload['animate_stickers'] = animate_stickers.value
+            payload["animate_stickers"] = animate_stickers.value
 
-        friend_flags = kwargs.pop('friend_source_flags', None)
+        friend_flags = kwargs.pop("friend_source_flags", None)
         if friend_flags:
-            payload['friend_source_flags'] = friend_flags.to_dict()
+            payload["friend_source_flags"] = friend_flags.to_dict()
 
-        guild_positions = kwargs.pop('guild_positions', None)
+        guild_positions = kwargs.pop("guild_positions", None)
         if guild_positions:
             guild_positions = [str(x.id) for x in guild_positions]
-            payload['guild_positions'] = guild_positions
+            payload["guild_positions"] = guild_positions
 
-        restricted_guilds = kwargs.pop('restricted_guilds', None)
+        restricted_guilds = kwargs.pop("restricted_guilds", None)
         if restricted_guilds:
             restricted_guilds = [str(x.id) for x in restricted_guilds]
-            payload['restricted_guilds'] = restricted_guilds
+            payload["restricted_guilds"] = restricted_guilds
 
-        status = kwargs.pop('status', None)
+        status = kwargs.pop("status", None)
         if status:
-            payload['status'] = status.value
+            payload["status"] = status.value
 
-        custom_activity = kwargs.pop('custom_activity', MISSING)
+        custom_activity = kwargs.pop("custom_activity", MISSING)
         if custom_activity is not MISSING:
-            payload['custom_status'] = custom_activity and custom_activity.to_settings_dict()
+            payload["custom_status"] = (
+                custom_activity and custom_activity.to_settings_dict()
+            )
 
-        theme = kwargs.pop('theme', None)
+        theme = kwargs.pop("theme", None)
         if theme:
-            payload['theme'] = theme.value
+            payload["theme"] = theme.value
 
         payload.update(kwargs)
 
@@ -812,14 +855,14 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         Specifies if the user is a system user (i.e. represents Discord officially).
     """
 
-    __slots__ = ('_stored',)
+    __slots__ = ("_stored",)
 
     def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
         super().__init__(state=state, data=data)
         self._stored: bool = False
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot} system={self.system}>'
+        return f"<{self.__class__.__name__} id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot} system={self.system}>"
 
     def __del__(self) -> None:
         try:
@@ -835,7 +878,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         return self
 
     def _get_voice_client_key(self) -> Tuple[int, str]:
-        return self._state.self_id, 'self_id'
+        return self._state.self_id, "self_id"
 
     def _get_voice_state_pair(self) -> Tuple[int, int]:
         return self._state.self_id, self.dm_channel.id
@@ -855,7 +898,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
 
     @property
     def call(self) -> Optional[PrivateCall]:
-        return getattr(self.dm_channel, 'call', None)
+        return getattr(self.dm_channel, "call", None)
 
     @property
     def relationship(self) -> Optional[Relationship]:
@@ -949,9 +992,9 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
             A user command.
         """
         if query and command_ids:
-            raise InvalidArgument('Cannot specify both query and command_ids')
+            raise InvalidArgument("Cannot specify both query and command_ids")
         if limit is not None and limit <= 0:
-            raise InvalidArgument('limit must be > 0')
+            raise InvalidArgument("limit must be > 0")
 
         return FakeCommandIterator(self, CommandType.user, query, limit, command_ids)
 
@@ -981,7 +1024,11 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         HTTPException
             Blocking the user failed.
         """
-        await self._state.http.add_relationship(self.id, type=RelationshipType.blocked.value, action=RelationshipAction.block)
+        await self._state.http.add_relationship(
+            self.id,
+            type=RelationshipType.blocked.value,
+            action=RelationshipAction.block,
+        )
 
     async def unblock(self) -> None:
         """|coro|
@@ -995,7 +1042,9 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         HTTPException
             Unblocking the user failed.
         """
-        await self._state.http.remove_relationship(self.id, action=RelationshipAction.unblock)
+        await self._state.http.remove_relationship(
+            self.id, action=RelationshipAction.unblock
+        )
 
     async def remove_friend(self) -> None:
         """|coro|
@@ -1009,7 +1058,9 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         HTTPException
             Removing the user as a friend failed.
         """
-        await self._state.http.remove_relationship(self.id, action=RelationshipAction.unfriend)
+        await self._state.http.remove_relationship(
+            self.id, action=RelationshipAction.unfriend
+        )
 
     async def send_friend_request(self) -> None:  # TODO: maybe return relationship
         """|coro|
@@ -1056,13 +1107,15 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
 
         user_id = self.id
         state = self._state
-        data = await state.http.get_user_profile(user_id, with_mutual_guilds=with_mutuals)
+        data = await state.http.get_user_profile(
+            user_id, with_mutual_guilds=with_mutuals
+        )
 
         if with_mutuals:
-            if not data['user'].get('bot', False):
-                data['mutual_friends'] = await self.http.get_mutual_friends(user_id)
+            if not data["user"].get("bot", False):
+                data["mutual_friends"] = await self.http.get_mutual_friends(user_id)
             else:
-                data['mutual_friends'] = []
+                data["mutual_friends"] = []
 
         profile = UserProfile(state=state, data=data)
 

@@ -24,21 +24,33 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, overload
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    overload,
+)
 
 from .enums import UserFlags
 
 __all__ = (
-    'SystemChannelFlags',
-    'MessageFlags',
-    'PublicUserFlags',
-    'MemberCacheFlags',
-    'ApplicationFlags',
-    'GuildSubscriptionOptions',
+    "SystemChannelFlags",
+    "MessageFlags",
+    "PublicUserFlags",
+    "MemberCacheFlags",
+    "ApplicationFlags",
+    "GuildSubscriptionOptions",
 )
 
-FV = TypeVar('FV', bound='flag_value')
-BF = TypeVar('BF', bound='BaseFlags')
+FV = TypeVar("FV", bound="flag_value")
+BF = TypeVar("BF", bound="BaseFlags")
 
 
 class flag_value:
@@ -63,7 +75,7 @@ class flag_value:
         instance._set_flag(self.flag, value)
 
     def __repr__(self):
-        return f'<flag_value flag={self.flag!r}>'
+        return f"<flag_value flag={self.flag!r}>"
 
 
 class alias_flag_value(flag_value):
@@ -82,7 +94,7 @@ def fill_with_flags(*, inverted: bool = False):
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
-            cls.DEFAULT_VALUE = -1 + (2 ** max_bits)
+            cls.DEFAULT_VALUE = -1 + (2**max_bits)
         else:
             cls.DEFAULT_VALUE = 0
 
@@ -98,13 +110,13 @@ class BaseFlags:
 
     value: int
 
-    __slots__ = ('value',)
+    __slots__ = ("value",)
 
     def __init__(self, **kwargs: bool):
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -123,7 +135,7 @@ class BaseFlags:
         return hash(self.value)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} value={self.value}>'
+        return f"<{self.__class__.__name__} value={self.value}>"
 
     def __iter__(self) -> Iterator[Tuple[str, bool]]:
         for name, value in self.__class__.__dict__.items():
@@ -142,7 +154,9 @@ class BaseFlags:
         elif toggle is False:
             self.value &= ~o
         else:
-            raise TypeError(f'Value to set for {self.__class__.__name__} must be a bool.')
+            raise TypeError(
+                f"Value to set for {self.__class__.__name__} must be a bool."
+            )
 
 
 @fill_with_flags(inverted=True)
@@ -196,7 +210,7 @@ class SystemChannelFlags(BaseFlags):
         elif toggle is False:
             self.value |= o
         else:
-            raise TypeError('Value to set for SystemChannelFlags must be a bool')
+            raise TypeError("Value to set for SystemChannelFlags must be a bool")
 
     @flag_value
     def join_notifications(self):
@@ -478,42 +492,46 @@ class PublicUserFlags(BaseFlags):
 
     def all(self) -> List[UserFlags]:
         """List[:class:`UserFlags`]: Returns all flags the user has."""
-        return [public_flag for public_flag in UserFlags if self._has_flag(public_flag.value)]
+        return [
+            public_flag
+            for public_flag in UserFlags
+            if self._has_flag(public_flag.value)
+        ]
 
 
 @fill_with_flags()
 class PrivateUserFlags(PublicUserFlags):
     r"""Wraps up the Discord User flags.
 
-        .. note::
-            These are only available on your own user flags.
+    .. note::
+        These are only available on your own user flags.
 
-        .. container:: operations
+    .. container:: operations
 
-            .. describe:: x == y
+        .. describe:: x == y
 
-                Checks if two UserFlags are equal.
-            .. describe:: x != y
+            Checks if two UserFlags are equal.
+        .. describe:: x != y
 
-                Checks if two UserFlags are not equal.
-            .. describe:: hash(x)
+            Checks if two UserFlags are not equal.
+        .. describe:: hash(x)
 
-                Return the flag's hash.
-            .. describe:: iter(x)
+            Return the flag's hash.
+        .. describe:: iter(x)
 
-                Returns an iterator of ``(name, value)`` pairs. This allows it
-                to be, for example, constructed as a dict or a list of pairs.
-                Note that aliases are not shown.
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
 
-        .. versionadded:: 2.0
+    .. versionadded:: 2.0
 
-        Attributes
-        -----------
-        value: :class:`int`
-            The raw value. This value is a bit array field of a 53-bit integer
-            representing the currently available flags. You should query
-            flags via the properties rather than using this raw value.
-        """
+    Attributes
+    -----------
+    value: :class:`int`
+        The raw value. This value is a bit array field of a 53-bit integer
+        representing the currently available flags. You should query
+        flags via the properties rather than using this raw value.
+    """
 
     __slots__ = ()
 
@@ -588,7 +606,7 @@ class MemberCacheFlags(BaseFlags):
         self.value = (1 << bits) - 1
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -806,19 +824,23 @@ class GuildSubscriptionOptions:
     """
 
     def __init__(
-        self, *, auto_subscribe: bool = True, concurrent_guilds: int = 2, max_online: int = 6000
+        self,
+        *,
+        auto_subscribe: bool = True,
+        concurrent_guilds: int = 2,
+        max_online: int = 6000,
     ) -> None:
         if concurrent_guilds < 1:
-            raise TypeError('concurrent_guilds must be positive')
+            raise TypeError("concurrent_guilds must be positive")
         if max_online < 1:
-            raise TypeError('max_online must be positive')
+            raise TypeError("max_online must be positive")
 
         self.auto_subscribe = auto_subscribe
         self.concurrent_guilds = concurrent_guilds
         self.max_online = max_online
 
     def __repr__(self) -> str:
-        return f'<GuildSubscriptionOptions auto_subscribe={self.auto_subscribe} concurrent_guilds={self.concurrent_guilds} max_online={self.max_online}'
+        return f"<GuildSubscriptionOptions auto_subscribe={self.auto_subscribe} concurrent_guilds={self.concurrent_guilds} max_online={self.max_online}"
 
     @classmethod
     def all(cls) -> GuildSubscriptionOptions:

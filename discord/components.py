@@ -26,7 +26,18 @@ from __future__ import annotations
 
 from asyncio import TimeoutError
 from datetime import datetime
-from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from .enums import try_enum, ComponentType, ButtonStyle
 from .errors import InvalidData
@@ -46,14 +57,14 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'Component',
-    'ActionRow',
-    'Button',
-    'SelectMenu',
-    'SelectOption',
+    "Component",
+    "ActionRow",
+    "Button",
+    "SelectMenu",
+    "SelectOption",
 )
 
-C = TypeVar('C', bound='Component')
+C = TypeVar("C", bound="Component")
 
 
 class Component:
@@ -75,15 +86,15 @@ class Component:
         The type of component.
     """
 
-    __slots__: Tuple[str, ...] = ('type', 'message')
+    __slots__: Tuple[str, ...] = ("type", "message")
 
     __repr_info__: ClassVar[Tuple[str, ...]]
     type: ComponentType
     message: Message
 
     def __repr__(self) -> str:
-        attrs = ' '.join(f'{key}={getattr(self, key)!r}' for key in self.__repr_info__)
-        return f'<{self.__class__.__name__} {attrs}>'
+        attrs = " ".join(f"{key}={getattr(self, key)!r}" for key in self.__repr_info__)
+        return f"<{self.__class__.__name__} {attrs}>"
 
     @classmethod
     def _raw_construct(cls: Type[C], **kwargs) -> C:
@@ -120,19 +131,21 @@ class ActionRow(Component):
         The originating message.
     """
 
-    __slots__: Tuple[str, ...] = ('children',)
+    __slots__: Tuple[str, ...] = ("children",)
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: ComponentPayload, message: Message):
         self.message = message
-        self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.children: List[Component] = [_component_factory(d, message) for d in data.get('components', [])]
+        self.type: ComponentType = try_enum(ComponentType, data["type"])
+        self.children: List[Component] = [
+            _component_factory(d, message) for d in data.get("components", [])
+        ]
 
     def to_dict(self) -> ActionRowPayload:
         return {
-            'type': int(self.type),
-            'components': [child.to_dict() for child in self.children],
+            "type": int(self.type),
+            "components": [child.to_dict() for child in self.children],
         }  # type: ignore
 
 
@@ -163,45 +176,45 @@ class Button(Component):
     """
 
     __slots__: Tuple[str, ...] = (
-        'style',
-        'custom_id',
-        'url',
-        'disabled',
-        'label',
-        'emoji',
+        "style",
+        "custom_id",
+        "url",
+        "disabled",
+        "label",
+        "emoji",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: ButtonComponentPayload, message: Message):
         self.message = message
-        self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.style: ButtonStyle = try_enum(ButtonStyle, data['style'])
-        self.custom_id: Optional[str] = data.get('custom_id')
-        self.url: Optional[str] = data.get('url')
-        self.disabled: bool = data.get('disabled', False)
-        self.label: Optional[str] = data.get('label')
+        self.type: ComponentType = try_enum(ComponentType, data["type"])
+        self.style: ButtonStyle = try_enum(ButtonStyle, data["style"])
+        self.custom_id: Optional[str] = data.get("custom_id")
+        self.url: Optional[str] = data.get("url")
+        self.disabled: bool = data.get("disabled", False)
+        self.label: Optional[str] = data.get("label")
         self.emoji: Optional[PartialEmoji]
         try:
-            self.emoji = PartialEmoji.from_dict(data['emoji'])
+            self.emoji = PartialEmoji.from_dict(data["emoji"])
         except KeyError:
             self.emoji = None
 
     def to_dict(self) -> ButtonComponentPayload:
         payload = {
-            'type': 2,
-            'style': int(self.style),
-            'label': self.label,
-            'disabled': self.disabled,
+            "type": 2,
+            "style": int(self.style),
+            "label": self.label,
+            "disabled": self.disabled,
         }
         if self.custom_id:
-            payload['custom_id'] = self.custom_id
+            payload["custom_id"] = self.custom_id
 
         if self.url:
-            payload['url'] = self.url
+            payload["url"] = self.url
 
         if self.emoji:
-            payload['emoji'] = self.emoji.to_dict()
+            payload["emoji"] = self.emoji.to_dict()
 
         return payload  # type: ignore
 
@@ -228,31 +241,31 @@ class Button(Component):
         message = self.message
         state = message._state
         payload = {
-            'application_id': str(message.application_id or message.author.id),
-            'channel_id': str(message.channel.id),
-            'data': {
-                'component_type': 2,
-                'custom_id': self.custom_id,
+            "application_id": str(message.application_id or message.author.id),
+            "channel_id": str(message.channel.id),
+            "data": {
+                "component_type": 2,
+                "custom_id": self.custom_id,
             },
-            'message_flags': message.flags.value,
-            'message_id': str(message.id),
-            'nonce': str(time_snowflake(datetime.utcnow())),
-            'session_id': state.session_id or _generate_session_id(),
-            'type': 3,  # Should be an enum but eh
+            "message_flags": message.flags.value,
+            "message_id": str(message.id),
+            "nonce": str(time_snowflake(datetime.utcnow())),
+            "session_id": state.session_id or _generate_session_id(),
+            "type": 3,  # Should be an enum but eh
         }
         if message.guild:
-            payload['guild_id'] = str(message.guild.id)
+            payload["guild_id"] = str(message.guild.id)
 
-        state._interactions[payload['nonce']] = (3, None)
+        state._interactions[payload["nonce"]] = (3, None)
         await state.http.interact(payload)
         try:
             i = await state.client.wait_for(
-                'interaction_finish',
-                check=lambda d: d.nonce == payload['nonce'],
+                "interaction_finish",
+                check=lambda d: d.nonce == payload["nonce"],
                 timeout=5,
             )
         except TimeoutError as exc:
-            raise InvalidData('Did not receive a response from Discord') from exc
+            raise InvalidData("Did not receive a response from Discord") from exc
         return i
 
 
@@ -285,13 +298,13 @@ class SelectMenu(Component):
     """
 
     __slots__: Tuple[str, ...] = (
-        'custom_id',
-        'placeholder',
-        'min_values',
-        'max_values',
-        'options',
-        'disabled',
-        'hash',
+        "custom_id",
+        "placeholder",
+        "min_values",
+        "max_values",
+        "options",
+        "disabled",
+        "hash",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -299,26 +312,28 @@ class SelectMenu(Component):
     def __init__(self, data: SelectMenuPayload, message: Message):
         self.message = message
         self.type = ComponentType.select
-        self.custom_id: str = data['custom_id']
-        self.placeholder: Optional[str] = data.get('placeholder')
-        self.min_values: int = data.get('min_values', 1)
-        self.max_values: int = data.get('max_values', 1)
-        self.options: List[SelectOption] = [SelectOption.from_dict(option) for option in data.get('options', [])]
-        self.disabled: bool = data.get('disabled', False)
-        self.hash: str = data.get('hash', '')
+        self.custom_id: str = data["custom_id"]
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+        self.options: List[SelectOption] = [
+            SelectOption.from_dict(option) for option in data.get("options", [])
+        ]
+        self.disabled: bool = data.get("disabled", False)
+        self.hash: str = data.get("hash", "")
 
     def to_dict(self) -> SelectMenuPayload:
         payload: SelectMenuPayload = {
-            'type': self.type.value,
-            'custom_id': self.custom_id,
-            'min_values': self.min_values,
-            'max_values': self.max_values,
-            'options': [op.to_dict() for op in self.options],
-            'disabled': self.disabled,
+            "type": self.type.value,
+            "custom_id": self.custom_id,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
+            "options": [op.to_dict() for op in self.options],
+            "disabled": self.disabled,
         }
 
         if self.placeholder:
-            payload['placeholder'] = self.placeholder
+            payload["placeholder"] = self.placeholder
 
         return payload
 
@@ -345,32 +360,32 @@ class SelectMenu(Component):
         message = self.message
         state = message._state
         payload = {
-            'application_id': str(message.application_id),
-            'channel_id': str(message.channel.id),
-            'data': {
-                'component_type': 3,
-                'custom_id': self.custom_id,
-                'values': [op.value for op in options]
+            "application_id": str(message.application_id),
+            "channel_id": str(message.channel.id),
+            "data": {
+                "component_type": 3,
+                "custom_id": self.custom_id,
+                "values": [op.value for op in options],
             },
-            'message_flags': message.flags.value,
-            'message_id': str(message.id),
-            'nonce': str(time_snowflake(datetime.utcnow())),
-            'session_id': state.session_id or _generate_session_id(),
-            'type': 3,  # Should be an enum but eh
+            "message_flags": message.flags.value,
+            "message_id": str(message.id),
+            "nonce": str(time_snowflake(datetime.utcnow())),
+            "session_id": state.session_id or _generate_session_id(),
+            "type": 3,  # Should be an enum but eh
         }
         if message.guild:
-            payload['guild_id'] = str(message.guild.id)
+            payload["guild_id"] = str(message.guild.id)
 
-        state._interactions[payload['nonce']] = (3, None)
+        state._interactions[payload["nonce"]] = (3, None)
         await state.http.interact(payload)
         try:
             i = await state.client.wait_for(
-                'interaction_finish',
-                check=lambda d: d.nonce == payload['nonce'],
+                "interaction_finish",
+                check=lambda d: d.nonce == payload["nonce"],
                 timeout=5,
             )
         except TimeoutError as exc:
-            raise InvalidData('Did not receive a response from Discord') from exc
+            raise InvalidData("Did not receive a response from Discord") from exc
         return i
 
 
@@ -398,11 +413,11 @@ class SelectOption:
     """
 
     __slots__: Tuple[str, ...] = (
-        'label',
-        'value',
-        'description',
-        'emoji',
-        'default',
+        "label",
+        "value",
+        "description",
+        "emoji",
+        "default",
     )
 
     def __init__(
@@ -424,60 +439,62 @@ class SelectOption:
             elif isinstance(emoji, _EmojiTag):
                 emoji = emoji._to_partial()
             else:
-                raise TypeError(f'expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
+                raise TypeError(
+                    f"expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}"
+                )
 
         self.emoji = emoji
         self.default = default
 
     def __repr__(self) -> str:
         return (
-            f'<SelectOption label={self.label!r} value={self.value!r} description={self.description!r} '
-            f'emoji={self.emoji!r} default={self.default!r}>'
+            f"<SelectOption label={self.label!r} value={self.value!r} description={self.description!r} "
+            f"emoji={self.emoji!r} default={self.default!r}>"
         )
 
     def __str__(self) -> str:
         if self.emoji:
-            base = f'{self.emoji} {self.label}'
+            base = f"{self.emoji} {self.label}"
         else:
             base = self.label
 
         if self.description:
-            return f'{base}\n{self.description}'
+            return f"{base}\n{self.description}"
         return base
 
     @classmethod
     def from_dict(cls, data: SelectOptionPayload) -> SelectOption:
         try:
-            emoji = PartialEmoji.from_dict(data['emoji'])
+            emoji = PartialEmoji.from_dict(data["emoji"])
         except KeyError:
             emoji = None
 
         return cls(
-            label=data['label'],
-            value=data['value'],
-            description=data.get('description'),
+            label=data["label"],
+            value=data["value"],
+            description=data.get("description"),
             emoji=emoji,
-            default=data.get('default', False),
+            default=data.get("default", False),
         )
 
     def to_dict(self) -> SelectOptionPayload:
         payload: SelectOptionPayload = {
-            'label': self.label,
-            'value': self.value,
-            'default': self.default,
+            "label": self.label,
+            "value": self.value,
+            "default": self.default,
         }
 
         if self.emoji:
-            payload['emoji'] = self.emoji.to_dict()  # type: ignore
+            payload["emoji"] = self.emoji.to_dict()  # type: ignore
 
         if self.description:
-            payload['description'] = self.description
+            payload["description"] = self.description
 
         return payload
 
 
 def _component_factory(data: ComponentPayload, message: Message) -> Component:
-    component_type = data['type']
+    component_type = data["type"]
     if component_type == 1:
         return ActionRow(data, message)
     elif component_type == 2:

@@ -29,7 +29,21 @@ import logging
 import signal
 import sys
 import traceback
-from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, overload, Sequence, TYPE_CHECKING, Tuple, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    overload,
+    Sequence,
+    TYPE_CHECKING,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import aiohttp
 
@@ -39,7 +53,12 @@ from .template import Template
 from .widget import Widget
 from .guild import Guild
 from .emoji import Emoji
-from .channel import _private_channel_factory, _threaded_channel_factory, GroupChannel, PartialMessageable
+from .channel import (
+    _private_channel_factory,
+    _threaded_channel_factory,
+    GroupChannel,
+    PartialMessageable,
+)
 from .enums import ActivityType, ChannelType, Status, VoiceRegion, InviteType, try_enum
 from .mentions import AllowedMentions
 from .errors import *
@@ -70,14 +89,13 @@ if TYPE_CHECKING:
     from .relationship import Relationship
     from .voice_client import VoiceProtocol
 
-__all__ = (
-    'Client',
-)
+__all__ = ("Client",)
 
-Coro = TypeVar('Coro', bound=Callable[..., Coroutine[Any, Any, Any]])
+Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 _log = logging.getLogger(__name__)
+
 
 def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
     tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
@@ -85,29 +103,32 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
     if not tasks:
         return
 
-    _log.info('Cleaning up after %d tasks.', len(tasks))
+    _log.info("Cleaning up after %d tasks.", len(tasks))
     for task in tasks:
         task.cancel()
 
     loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
-    _log.info('All tasks finished cancelling.')
+    _log.info("All tasks finished cancelling.")
 
     for task in tasks:
         if task.cancelled():
             continue
         if task.exception() is not None:
-            loop.call_exception_handler({
-                'message': 'Unhandled exception during Client.run shutdown.',
-                'exception': task.exception(),
-                'task': task
-            })
+            loop.call_exception_handler(
+                {
+                    "message": "Unhandled exception during Client.run shutdown.",
+                    "exception": task.exception(),
+                    "task": task,
+                }
+            )
+
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
     finally:
-        _log.info('Closing the event loop.')
+        _log.info("Closing the event loop.")
         loop.close()
 
 
@@ -196,6 +217,7 @@ class Client:
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the client uses for asynchronous operations.
     """
+
     def __init__(
         self,
         *,
@@ -204,50 +226,66 @@ class Client:
     ):
         # Set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
-        self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+        self.loop: asyncio.AbstractEventLoop = (
+            asyncio.get_event_loop() if loop is None else loop
+        )
+        self._listeners: Dict[
+            str, List[Tuple[asyncio.Future, Callable[..., bool]]]
+        ] = {}
 
-        connector: Optional[aiohttp.BaseConnector] = options.pop('connector', None)
-        proxy: Optional[str] = options.pop('proxy', None)
-        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop('proxy_auth', None)
-        unsync_clock: bool = options.pop('assume_unsync_clock', True)
-        self.http: HTTPClient = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop)
+        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
+        proxy: Optional[str] = options.pop("proxy", None)
+        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
+        unsync_clock: bool = options.pop("assume_unsync_clock", True)
+        self.http: HTTPClient = HTTPClient(
+            connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            unsync_clock=unsync_clock,
+            loop=self.loop,
+        )
 
         self._handlers: Dict[str, Callable] = {
-            'ready': self._handle_ready,
-            'connect': self._handle_connect
+            "ready": self._handle_ready,
+            "connect": self._handle_connect,
         }
 
         self._hooks: Dict[str, Callable] = {
-            'before_identify': self._call_before_identify_hook
+            "before_identify": self._call_before_identify_hook
         }
 
-        self._enable_debug_events: bool = options.pop('enable_debug_events', False)
-        self._sync_presences: bool = options.pop('sync_presence', True)
+        self._enable_debug_events: bool = options.pop("enable_debug_events", False)
+        self._sync_presences: bool = options.pop("sync_presence", True)
         self._connection: ConnectionState = self._get_state(**options)
         self._closed: bool = False
         self._ready: asyncio.Event = asyncio.Event()
 
         self._client_status: Dict[Optional[str], str] = {
-            None: 'offline',
-            'this': 'offline',
+            None: "offline",
+            "this": "offline",
         }
         self._client_activities: Dict[Optional[str], Tuple[ActivityTypes, ...]] = {
             None: None,
-            'this': None,
+            "this": None,
         }
         self._session_count = 1
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
-            _log.warning('PyNaCl is not installed, voice will NOT be supported.')
+            _log.warning("PyNaCl is not installed, voice will NOT be supported.")
 
     # Internals
 
     def _get_state(self, **options: Any) -> ConnectionState:
-        return ConnectionState(dispatch=self.dispatch, handlers=self._handlers,
-                               hooks=self._hooks, http=self.http, loop=self.loop,
-                               client=self, **options)
+        return ConnectionState(
+            dispatch=self.dispatch,
+            handlers=self._handlers,
+            hooks=self._hooks,
+            http=self.http,
+            loop=self.loop,
+            client=self,
+            **options,
+        )
 
     def _handle_ready(self) -> None:
         self._ready.set()
@@ -257,8 +295,10 @@ class Client:
         activities = self.initial_activities
         status = self.initial_status
         if status is None:
-            status = getattr(state.settings, 'status', None)
-        self.loop.create_task(self.change_presence(activities=activities, status=status))
+            status = getattr(state.settings, "status", None)
+        self.loop.create_task(
+            self.change_presence(activities=activities, status=status)
+        )
 
     @property
     def latency(self) -> float:
@@ -267,7 +307,7 @@ class Client:
         This could be referred to as the Discord WebSocket protocol latency.
         """
         ws = self.ws
-        return float('nan') if not ws else ws.latency
+        return float("nan") if not ws else ws.latency
 
     def is_ws_ratelimited(self) -> bool:
         """:class:`bool`: Whether the websocket is currently rate limited.
@@ -329,7 +369,13 @@ class Client:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
         return self._ready.is_set()
 
-    async def _run_event(self, coro: Callable[..., Coroutine[Any, Any, Any]], event_name: str, *args: Any, **kwargs: Any) -> None:
+    async def _run_event(
+        self,
+        coro: Callable[..., Coroutine[Any, Any, Any]],
+        event_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         try:
             await coro(*args, **kwargs)
         except asyncio.CancelledError:
@@ -340,13 +386,19 @@ class Client:
             except asyncio.CancelledError:
                 pass
 
-    def _schedule_event(self, coro: Callable[..., Coroutine[Any, Any, Any]], event_name: str, *args: Any, **kwargs: Any) -> asyncio.Task:
+    def _schedule_event(
+        self,
+        coro: Callable[..., Coroutine[Any, Any, Any]],
+        event_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> asyncio.Task:
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
-        return asyncio.create_task(wrapped, name=f'discord.py: {event_name}')
+        return asyncio.create_task(wrapped, name=f"discord.py: {event_name}")
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        _log.debug('Dispatching event %s.', event)
-        method = 'on_' + event
+        _log.debug("Dispatching event %s.", event)
+        method = "on_" + event
 
         listeners = self._listeners.get(event)
         if listeners:
@@ -393,14 +445,17 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~discord.on_error` for more details.
         """
-        print(f'Ignoring exception in {event_method}', file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
     async def on_internal_settings_update(self, old_settings, new_settings):
         if not self._sync_presences:
             return
 
-        if old_settings._status == new_settings._status and old_settings._custom_status == new_settings._custom_status:
+        if (
+            old_settings._status == new_settings._status
+            and old_settings._custom_status == new_settings._custom_status
+        ):
             return  # Nothing changed
 
         status = new_settings.status
@@ -408,7 +463,9 @@ class Client:
         if (activity := new_settings.custom_activity) is not None:
             activities.append(activity)
 
-        await self.change_presence(status=status, activities=activities, edit_settings=False)
+        await self.change_presence(
+            status=status, activities=activities, edit_settings=False
+        )
 
     # Hooks
 
@@ -465,11 +522,11 @@ class Client:
             passing status code.
         """
 
-        _log.info('Logging in using static token.')
+        _log.info("Logging in using static token.")
 
         state = self._connection
         data = await state.http.static_login(token.strip())
-        state.analytics_token = data.get('analytics_token', '')
+        state.analytics_token = data.get("analytics_token", "")
         state.user = ClientUser(state=state, data=data)
 
     async def connect(self, *, reconnect: bool = True) -> None:
@@ -499,28 +556,34 @@ class Client:
 
         backoff = ExponentialBackoff()
         ws_params = {
-            'initial': True,
+            "initial": True,
         }
         while not self.is_closed():
             try:
                 coro = DiscordWebSocket.from_client(self, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
-                ws_params['initial'] = False
+                ws_params["initial"] = False
                 while True:
                     await self.ws.poll_event()
             except ReconnectWebSocket as e:
-                _log.info('Got a request to %s the websocket.', e.op)
-                self.dispatch('disconnect')
-                ws_params.update(sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id)
+                _log.info("Got a request to %s the websocket.", e.op)
+                self.dispatch("disconnect")
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    resume=e.resume,
+                    session=self.ws.session_id,
+                )
                 continue
-            except (OSError,
-                    HTTPException,
-                    GatewayNotFound,
-                    ConnectionClosed,
-                    aiohttp.ClientError,
-                    asyncio.TimeoutError) as exc:
+            except (
+                OSError,
+                HTTPException,
+                GatewayNotFound,
+                ConnectionClosed,
+                aiohttp.ClientError,
+                asyncio.TimeoutError,
+            ) as exc:
 
-                self.dispatch('disconnect')
+                self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
                     if isinstance(exc, ConnectionClosed) and exc.code == 1000:
@@ -533,7 +596,12 @@ class Client:
 
                 # If we get connection reset by peer then try to RESUME
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
-                    ws_params.update(sequence=self.ws.sequence, initial=False, resume=True, session=self.ws.session_id)
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        initial=False,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
                     continue
 
                 # We should only get this when an unhandled close code happens,
@@ -551,7 +619,9 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session
                 # This is apparently what the official Discord client does
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence, resume=True, session=self.ws.session_id
+                )
 
     async def close(self) -> None:
         """|coro|
@@ -643,10 +713,10 @@ class Client:
         try:
             loop.run_forever()
         except KeyboardInterrupt:
-            _log.info('Received signal to terminate bot and event loop.')
+            _log.info("Received signal to terminate bot and event loop.")
         finally:
             future.remove_done_callback(stop_loop_on_completion)
-            _log.info('Cleaning up tasks.')
+            _log.info("Cleaning up tasks.")
             _cleanup_loop(loop)
 
         if not future.cancelled():
@@ -675,7 +745,11 @@ class Client:
 
             The client may be setting multiple activities, these can be accessed under :attr:`initial_activities`.
         """
-        return create_activity(self._connection._activities[0]) if self._connection._activities else None
+        return (
+            create_activity(self._connection._activities[0])
+            if self._connection._activities
+            else None
+        )
 
     @initial_activity.setter
     def initial_activity(self, value: Optional[ActivityTypes]) -> None:
@@ -685,7 +759,7 @@ class Client:
             # ConnectionState._activities is typehinted as List[ActivityPayload], we're passing List[Dict[str, Any]]
             self._connection._activities = [value.to_dict()]  # type: ignore
         else:
-            raise TypeError('activity must derive from BaseActivity')
+            raise TypeError("activity must derive from BaseActivity")
 
     @property
     def initial_activities(self) -> List[ActivityTypes]:
@@ -700,7 +774,7 @@ class Client:
             # ConnectionState._activities is typehinted as List[ActivityPayload], we're passing List[Dict[str, Any]]
             self._connection._activities = [value.to_dict() for value in values]  # type: ignore
         else:
-            raise TypeError('activity must derive from BaseActivity')
+            raise TypeError("activity must derive from BaseActivity")
 
     @property
     def initial_status(self):
@@ -715,11 +789,11 @@ class Client:
     @initial_status.setter
     def initial_status(self, value):
         if value is Status.offline:
-            self._connection._status = 'invisible'
+            self._connection._status = "invisible"
         elif isinstance(value, Status):
             self._connection._status = str(value)
         else:
-            raise TypeError('status must derive from Status')
+            raise TypeError("status must derive from Status")
 
     @property
     def status(self) -> Status:
@@ -729,7 +803,7 @@ class Client:
         """
         status = try_enum(Status, self._client_status[None])
         if status is Status.offline and not self.is_closed():
-            status = getattr(self._connection.settings, 'status', status)
+            status = getattr(self._connection.settings, "status", status)
         return status
 
     @property
@@ -751,7 +825,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return try_enum(Status, self._client_status.get('mobile', 'offline'))
+        return try_enum(Status, self._client_status.get("mobile", "offline"))
 
     @property
     def desktop_status(self) -> Status:
@@ -759,7 +833,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return try_enum(Status, self._client_status.get('desktop', 'offline'))
+        return try_enum(Status, self._client_status.get("desktop", "offline"))
 
     @property
     def web_status(self) -> Status:
@@ -767,7 +841,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return try_enum(Status, self._client_status.get('web', 'offline'))
+        return try_enum(Status, self._client_status.get("web", "offline"))
 
     @property
     def client_status(self) -> Status:
@@ -775,9 +849,9 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        status = try_enum(Status, self._client_status['this'])
+        status = try_enum(Status, self._client_status["this"])
         if status is Status.offline and not self.is_closed():
-            status = getattr(self._connection.settings, 'status', status)
+            status = getattr(self._connection.settings, "status", status)
         return status
 
     def is_on_mobile(self) -> bool:
@@ -785,7 +859,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return 'mobile' in self._client_status
+        return "mobile" in self._client_status
 
     @property
     def activities(self) -> Tuple[ActivityTypes]:
@@ -802,7 +876,7 @@ class Client:
         """
         activities = tuple(map(create_activity, self._client_activities[None]))
         if activities is None and not self.is_closed():
-            activities = getattr(self._connection.settings, 'custom_activity', [])
+            activities = getattr(self._connection.settings, "custom_activity", [])
             activities = [activities] if activities else activities
         return activities
 
@@ -823,7 +897,7 @@ class Client:
 
             The client may have multiple activities, these can be accessed under :attr:`activities`.
         """
-        if (activities := self.activities):
+        if activities := self.activities:
             return activities[0]
 
     @property
@@ -833,7 +907,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return tuple(map(create_activity, self._client_activities.get('mobile', [])))
+        return tuple(map(create_activity, self._client_activities.get("mobile", [])))
 
     @property
     def desktop_activities(self) -> Tuple[ActivityTypes]:
@@ -842,7 +916,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return tuple(map(create_activity, self._client_activities.get('desktop', [])))
+        return tuple(map(create_activity, self._client_activities.get("desktop", [])))
 
     @property
     def web_activities(self) -> Tuple[ActivityTypes]:
@@ -851,7 +925,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return tuple(map(create_activity, self._client_activities.get('web', [])))
+        return tuple(map(create_activity, self._client_activities.get("web", [])))
 
     @property
     def client_activities(self) -> Tuple[ActivityTypes]:
@@ -860,9 +934,11 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        activities = tuple(map(create_activity, self._client_activities.get('this', [])))
+        activities = tuple(
+            map(create_activity, self._client_activities.get("this", []))
+        )
         if activities is None and not self.is_closed():
-            activities = getattr(self._connection.settings, 'custom_activity', [])
+            activities = getattr(self._connection.settings, "custom_activity", [])
             activities = [activities] if activities else activities
         return activities
 
@@ -879,7 +955,9 @@ class Client:
         if value is None or isinstance(value, AllowedMentions):
             self._connection.allowed_mentions = value
         else:
-            raise TypeError(f'allowed_mentions must be AllowedMentions not {value.__class__!r}')
+            raise TypeError(
+                f"allowed_mentions must be AllowedMentions not {value.__class__!r}"
+            )
 
     # Helpers/Getters
 
@@ -888,7 +966,9 @@ class Client:
         """List[:class:`~discord.User`]: Returns a list of all the users the bot can see."""
         return list(self._connection._users.values())
 
-    def get_channel(self, id: int, /) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
+    def get_channel(
+        self, id: int, /
+    ) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
         """Returns a channel or thread with the given ID.
 
         Parameters
@@ -903,12 +983,14 @@ class Client:
         """
         return self._connection.get_channel(id)
 
-    def get_partial_messageable(self, id: int, *, type: Optional[ChannelType] = None) -> PartialMessageable:
+    def get_partial_messageable(
+        self, id: int, *, type: Optional[ChannelType] = None
+    ) -> PartialMessageable:
         """Returns a partial messageable with the given channel ID.
 
         This is useful if you have a channel_id but don't want to do an API call
         to send messages to it.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1149,8 +1231,10 @@ class Client:
 
         future = self.loop.create_future()
         if check is None:
+
             def _check(*args):
                 return True
+
             check = _check
 
         ev = event.lower()
@@ -1188,10 +1272,10 @@ class Client:
         """
 
         if not asyncio.iscoroutinefunction(coro):
-            raise TypeError('event registered must be a coroutine function')
+            raise TypeError("event registered must be a coroutine function")
 
         setattr(self, coro.__name__, coro)
-        _log.debug('%s has successfully been registered as an event', coro.__name__)
+        _log.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
 
     async def change_presence(
@@ -1248,7 +1332,7 @@ class Client:
             Both ``activity`` and ``activities`` were passed.
         """
         if activity and activities:
-            raise InvalidArgument('Cannot pass both activity and activities')
+            raise InvalidArgument("Cannot pass both activity and activities")
         activities = activities or activity and [activity]
         if activities is None:
             activities = []
@@ -1264,20 +1348,22 @@ class Client:
             custom_activity = None
 
             for activity in activities:
-                if getattr(activity, 'type', None) is ActivityType.custom:
+                if getattr(activity, "type", None) is ActivityType.custom:
                     custom_activity = activity
 
-            payload: Dict[str, Any] = {'status': status}
-            payload['custom_activity'] = custom_activity
+            payload: Dict[str, Any] = {"status": status}
+            payload["custom_activity"] = custom_activity
             await self.user.edit_settings(**payload)
 
         status_str = str(status)
         activities_tuple = tuple(a.to_dict() for a in activities)
-        self._client_status['this'] = str(status)
-        self._client_activities['this'] = activities_tuple
+        self._client_status["this"] = str(status)
+        self._client_activities["this"] = activities_tuple
         if self._session_count <= 1:
             self._client_status[None] = status_str
-            self._client_activities[None] = self._client_activities['this'] = activities_tuple
+            self._client_activities[None] = self._client_activities[
+                "this"
+            ] = activities_tuple
 
     async def change_voice_state(
         self,
@@ -1286,7 +1372,7 @@ class Client:
         self_mute: bool = False,
         self_deaf: bool = False,
         self_video: bool = False,
-        preferred_region: Optional[VoiceRegion] = MISSING
+        preferred_region: Optional[VoiceRegion] = MISSING,
     ) -> None:
         """|coro|
 
@@ -1315,17 +1401,19 @@ class Client:
         if preferred_region is None or channel_id is None:
             region = None
         else:
-            region = str(preferred_region) if preferred_region else str(state.preferred_region)
+            region = (
+                str(preferred_region)
+                if preferred_region
+                else str(state.preferred_region)
+            )
 
-        await ws.voice_state(None, channel_id, self_mute, self_deaf, self_video, preferred_region=region)
+        await ws.voice_state(
+            None, channel_id, self_mute, self_deaf, self_video, preferred_region=region
+        )
 
     # Guild stuff
 
-    async def fetch_guilds(
-        self,
-        *,
-        with_counts: bool = True
-    ) -> List[Guild]:
+    async def fetch_guilds(self, *, with_counts: bool = True) -> List[Guild]:
         """Retrieves all your your guilds.
 
         .. note::
@@ -1488,12 +1576,18 @@ class Client:
             The stage instance from the stage channel ID.
         """
         data = await self.http.get_stage_instance(channel_id)
-        guild = self.get_guild(int(data['guild_id']))
+        guild = self.get_guild(int(data["guild_id"]))
         return StageInstance(guild=guild, state=self._connection, data=data)  # type: ignore
 
     # Invite management
 
-    async def fetch_invite(self, url: Union[Invite, str], *, with_counts: bool = True, with_expiration: bool = True) -> Invite:
+    async def fetch_invite(
+        self,
+        url: Union[Invite, str],
+        *,
+        with_counts: bool = True,
+        with_expiration: bool = True,
+    ) -> Invite:
         """|coro|
 
         Gets an :class:`.Invite` from a discord.gg URL or ID.
@@ -1532,7 +1626,9 @@ class Client:
         """
 
         invite_id = utils.resolve_invite(url)
-        data = await self.http.get_invite(invite_id, with_counts=with_counts, with_expiration=with_expiration)
+        data = await self.http.get_invite(
+            invite_id, with_counts=with_counts, with_expiration=with_expiration
+        )
         return Invite.from_incomplete(state=self._connection, data=data)
 
     async def delete_invite(self, invite: Union[Invite, str]) -> None:
@@ -1561,7 +1657,9 @@ class Client:
         invite_id = utils.resolve_invite(invite)
         await self.http.delete_invite(invite_id)
 
-    async def accept_invite(self, invite: Union[Invite, str]) -> Union[Guild, User, GroupChannel]:
+    async def accept_invite(
+        self, invite: Union[Invite, str]
+    ) -> Union[Guild, User, GroupChannel]:
         """|coro|
 
         Uses an invite.
@@ -1587,25 +1685,27 @@ class Client:
         """
 
         if not isinstance(invite, Invite):
-            invite = await self.fetch_invite(invite, with_counts=False, with_expiration=False)
+            invite = await self.fetch_invite(
+                invite, with_counts=False, with_expiration=False
+            )
 
         state = self._connection
         type = invite.type
-        if (message := invite._message):
-            kwargs = {'message': message}
+        if message := invite._message:
+            kwargs = {"message": message}
         else:
             kwargs = {
-                'guild_id': getattr(invite.guild, 'id', MISSING),
-                'channel_id': getattr(invite.channel, 'id', MISSING),
-                'channel_type': getattr(invite.channel, 'type', MISSING),
+                "guild_id": getattr(invite.guild, "id", MISSING),
+                "channel_id": getattr(invite.channel, "id", MISSING),
+                "channel_type": getattr(invite.channel, "type", MISSING),
             }
         data = await state.http.accept_invite(invite.code, type, **kwargs)
         if type is InviteType.guild:
-            return Guild(data=data['guild'], state=state)
+            return Guild(data=data["guild"], state=state)
         elif type is InviteType.group_dm:
-            return GroupChannel(data=data['channel'], state=state, me=state.user)  # type: ignore
+            return GroupChannel(data=data["channel"], state=state, me=state.user)  # type: ignore
         else:
-            return User(data=data['inviter'], state=state)
+            return User(data=data["inviter"], state=state)
 
     # Miscellaneous stuff
 
@@ -1709,13 +1809,15 @@ class Client:
             The profile of the user.
         """
         state = self._connection
-        data = await state.http.get_user_profile(user_id, with_mutual_guilds=with_mutuals)
+        data = await state.http.get_user_profile(
+            user_id, with_mutual_guilds=with_mutuals
+        )
 
         if with_mutuals:
-            if not data['user'].get('bot', False):
-                data['mutual_friends'] = await state.http.get_mutual_friends(user_id)
+            if not data["user"].get("bot", False):
+                data["mutual_friends"] = await state.http.get_mutual_friends(user_id)
             else:
-                data['mutual_friends'] = []
+                data["mutual_friends"] = []
         profile = UserProfile(state=state, data=data)
 
         if fetch_note:
@@ -1723,7 +1825,9 @@ class Client:
 
         return profile
 
-    async def fetch_channel(self, channel_id: int, /) -> Union[GuildChannel, PrivateChannel, Thread]:
+    async def fetch_channel(
+        self, channel_id: int, /
+    ) -> Union[GuildChannel, PrivateChannel, Thread]:
         """|coro|
 
         Retrieves a :class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`, or :class:`.Thread` with the specified ID.
@@ -1752,19 +1856,21 @@ class Client:
         """
         data = await self.http.get_channel(channel_id)
 
-        factory, ch_type = _threaded_channel_factory(data['type'])
+        factory, ch_type = _threaded_channel_factory(data["type"])
         if factory is None:
-            raise InvalidData('Unknown channel type {type} for channel ID {id}.'.format_map(data))
+            raise InvalidData(
+                "Unknown channel type {type} for channel ID {id}.".format_map(data)
+            )
 
         if ch_type in (ChannelType.group, ChannelType.private):
             # The factory will be a DMChannel or GroupChannel here
-            channel = factory(me=self.user, data=data, state=self._connection) # type: ignore
+            channel = factory(me=self.user, data=data, state=self._connection)  # type: ignore
         else:
             # The factory can't be a DMChannel or GroupChannel here
-            guild_id = int(data['guild_id']) # type: ignore
+            guild_id = int(data["guild_id"])  # type: ignore
             guild = self.get_guild(guild_id) or Object(id=guild_id)
             # GuildChannels expect a Guild, we may be passing an Object
-            channel = factory(guild=guild, state=self._connection, data=data) # type: ignore
+            channel = factory(guild=guild, state=self._connection, data=data)  # type: ignore
 
         return channel
 
@@ -1790,7 +1896,9 @@ class Client:
         data = await self.http.get_webhook(webhook_id)
         return Webhook.from_state(data, state=self._connection)
 
-    async def fetch_sticker(self, sticker_id: int, /) -> Union[StandardSticker, GuildSticker]:
+    async def fetch_sticker(
+        self, sticker_id: int, /
+    ) -> Union[StandardSticker, GuildSticker]:
         """|coro|
 
         Retrieves a :class:`.Sticker` with the specified ID.
@@ -1810,11 +1918,15 @@ class Client:
             The sticker you requested.
         """
         data = await self.http.get_sticker(sticker_id)
-        cls, _ = _sticker_factory(data['type'])  # type: ignore
+        cls, _ = _sticker_factory(data["type"])  # type: ignore
         return cls(state=self._connection, data=data)  # type: ignore
 
     async def fetch_sticker_packs(
-        self, *, country: str = 'US', locale: str = 'en-US', payment_source_id: int = MISSING
+        self,
+        *,
+        country: str = "US",
+        locale: str = "en-US",
+        payment_source_id: int = MISSING,
     ) -> List[StickerPack]:
         """|coro|
 
@@ -1843,8 +1955,13 @@ class Client:
         List[:class:`.StickerPack`]
             All available sticker packs.
         """
-        data = await self.http.list_premium_sticker_packs(country, locale, payment_source_id)
-        return [StickerPack(state=self._connection, data=pack) for pack in data['sticker_packs']]
+        data = await self.http.list_premium_sticker_packs(
+            country, locale, payment_source_id
+        )
+        return [
+            StickerPack(state=self._connection, data=pack)
+            for pack in data["sticker_packs"]
+        ]
 
     async def fetch_sticker_pack(self, pack_id: int, /):
         """|coro|
@@ -1945,7 +2062,12 @@ class Client:
         """
         state = self._connection
         channels = await state.http.get_private_channels()
-        return [_private_channel_factory(data['type'])[0](me=self.user, data=data, state=state) for data in channels]
+        return [
+            _private_channel_factory(data["type"])[0](
+                me=self.user, data=data, state=state
+            )
+            for data in channels
+        ]
 
     async def create_dm(self, user: Snowflake) -> DMChannel:
         """|coro|
@@ -2012,10 +2134,14 @@ class Client:
         ...
 
     @overload
-    async def send_friend_request(self, username: str, discriminator: Union[int, str]) -> Relationship:
+    async def send_friend_request(
+        self, username: str, discriminator: Union[int, str]
+    ) -> Relationship:
         ...
 
-    async def send_friend_request(self, *args: Union[BaseUser, int, str]) -> Relationship:
+    async def send_friend_request(
+        self, *args: Union[BaseUser, int, str]
+    ) -> Relationship:
         """|coro|
 
         Sends a friend request to another user.
@@ -2062,11 +2188,13 @@ class Client:
             user = args[0]
             if isinstance(user, BaseUser):
                 user = str(user)
-            username, discrim = user.split('#')  # type: ignore
+            username, discrim = user.split("#")  # type: ignore
         elif len(args) == 2:
             username, discrim = args  # type: ignore
         else:
-            raise TypeError(f'send_friend_request() takes 1 or 2 arguments but {len(args)} were given')
+            raise TypeError(
+                f"send_friend_request() takes 1 or 2 arguments but {len(args)} were given"
+            )
 
         state = self._connection
         data = await state.http.send_friend_request(username, discrim)

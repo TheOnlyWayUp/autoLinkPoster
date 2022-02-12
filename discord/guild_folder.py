@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.snowflake import Snowflake
 
-__all__ = ('GuildFolder',)
+__all__ = ("GuildFolder",)
 
 
 class GuildFolder:
@@ -52,14 +52,17 @@ class GuildFolder:
     guilds: List[:class:`Guild`]
         The guilds in the folder.
     """
-    __slots__ = ('_state', 'id', 'name', '_colour', 'guilds')
+
+    __slots__ = ("_state", "id", "name", "_colour", "guilds")
 
     def __init__(self, *, data, state: ConnectionState) -> None:
         self._state = state
-        self.id: Snowflake = data['id']
-        self.name: str = data['name']
-        self._colour: int = data['color']
-        self.guilds: List[Guild] = list(filter(None, map(self._get_guild, data['guild_ids'])))
+        self.id: Snowflake = data["id"]
+        self.name: str = data["name"]
+        self._colour: int = data["color"]
+        self.guilds: List[Guild] = list(
+            filter(None, map(self._get_guild, data["guild_ids"]))
+        )
 
     def _get_guild(self, id):
         return self._state._get_guild(int(id))
@@ -82,10 +85,10 @@ class GuildFolder:
         return self.colour
 
     def __str__(self) -> str:
-        return self.name or 'None'
+        return self.name or "None"
 
     def __repr__(self) -> str:
-        return f'<GuildFolder id={self.id} name={self.name} guilds={self.guilds!r}>'
+        return f"<GuildFolder id={self.id} name={self.name} guilds={self.guilds!r}>"
 
     def __len__(self) -> int:
         return len(self.name)

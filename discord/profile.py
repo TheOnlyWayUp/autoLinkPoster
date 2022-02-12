@@ -68,27 +68,35 @@ class Profile:
         _state: ConnectionState
 
     def __init__(self, **kwargs) -> None:  # TODO: type data
-        data = kwargs.pop('data')
-        user = data['user']
+        data = kwargs.pop("data")
+        user = data["user"]
 
-        if (member := data.get('guild_member')) is not None:
-            member['user'] = user
-            kwargs['data'] = member
+        if (member := data.get("guild_member")) is not None:
+            member["user"] = user
+            kwargs["data"] = member
         else:
-            kwargs['data'] = user
+            kwargs["data"] = user
 
         super().__init__(**kwargs)
 
-        self._flags: int = user.pop('flags', 0)
-        self.bio: Optional[str] = user.pop('bio') or None
-        self.note: Note = Note(kwargs['state'], self.id, user=self)
+        self._flags: int = user.pop("flags", 0)
+        self.bio: Optional[str] = user.pop("bio") or None
+        self.note: Note = Note(kwargs["state"], self.id, user=self)
 
-        self.premium_since: Optional[datetime] = parse_time(data['premium_since'])
-        self.boosting_since: Optional[datetime] = parse_time(data['premium_guild_since'])
-        self.connections: List[PartialConnection] = [PartialConnection(d) for d in data['connected_accounts']]  # TODO: parse these
+        self.premium_since: Optional[datetime] = parse_time(data["premium_since"])
+        self.boosting_since: Optional[datetime] = parse_time(
+            data["premium_guild_since"]
+        )
+        self.connections: List[PartialConnection] = [
+            PartialConnection(d) for d in data["connected_accounts"]
+        ]  # TODO: parse these
 
-        self.mutual_guilds: Optional[List[Guild]] = self._parse_mutual_guilds(data.get('mutual_guilds'))
-        self.mutual_friends: Optional[List[User]] = self._parse_mutual_friends(data.get('mutual_friends'))
+        self.mutual_guilds: Optional[List[Guild]] = self._parse_mutual_guilds(
+            data.get("mutual_guilds")
+        )
+        self.mutual_friends: Optional[List[User]] = self._parse_mutual_friends(
+            data.get("mutual_friends")
+        )
 
     def _parse_mutual_guilds(self, mutual_guilds) -> Optional[List[Guild]]:
         if mutual_guilds is None:
@@ -97,7 +105,7 @@ class Profile:
         state = self._state
 
         def get_guild(guild) -> Optional[Guild]:
-            return state._get_guild(int(guild['id']))
+            return state._get_guild(int(guild["id"]))
 
         # Potential data loss if the gateway is not connected
         return list(filter(None, map(get_guild, mutual_guilds)))
@@ -133,12 +141,12 @@ class Profile:
 
 class UserProfile(Profile, User):
     def __repr__(self) -> str:
-        return f'<UserProfile id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot} system={self.system} premium={self.premium}>'
+        return f"<UserProfile id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot} system={self.system} premium={self.premium}>"
 
 
 class MemberProfile(Profile, Member):
     def __repr__(self) -> str:
         return (
-            f'<MemberProfile id={self._user.id} name={self._user.name!r} discriminator={self._user.discriminator!r}'
-            f' bot={self._user.bot} nick={self.nick!r} premium={self.premium} guild={self.guild!r}>'
+            f"<MemberProfile id={self._user.id} name={self._user.name!r} discriminator={self._user.discriminator!r}"
+            f" bot={self._user.bot} nick={self.nick!r} premium={self.premium} guild={self.guild!r}>"
         )
