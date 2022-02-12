@@ -1,4 +1,4 @@
-""""Program to check for messages in a channel containing a URL and Description, adding that to a database and periodically sending one of those cool links to the #cool links channel on the r/discord_bots discord server."""
+"""Program to check for messages in a channel containing a URL and Description, adding that to a database and periodically sending one of those cool links to the #cool links channel on the r/discord_bots discord server."""
 
 # pylint: disable=invalid-name, wrong-import-order, multiple-imports, no-member, line-too-long
 
@@ -158,8 +158,7 @@ async def on_message(message: discord.Message) -> None:
 
 @tasks.loop(minutes=bot.config["sendingDelay"])
 async def sendLinks() -> None:
-    """
-    Task that sends links from the database to the submission channel."""
+    """Task that sends links from the database to the submission channel."""
     bot.console.log("Sending random suggestion.")
     async with aiosqlite.connect(bot.databasePath) as db:
         link = await db.execute(
