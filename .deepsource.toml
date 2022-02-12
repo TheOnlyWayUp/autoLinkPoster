@@ -1,6 +1,6 @@
 version = 1
 
-exclude_patterns = ["discord/*"]
+exclude_patterns = ["discord"]
 
 [[analyzers]]
 name = "python"
