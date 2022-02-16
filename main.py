@@ -38,7 +38,7 @@ async def readyDatabase() -> bool:
     """Checks if the database is ready to be used. Else creates a database - username: str, id: int, title: str, description: str, url: str, date_added: str, sent: bool
 
     Returns:
-        Boolean: [description]
+        Boolean: Whether or not the database was initialised successfully.
     """
     async with aiosqlite.connect(bot.databasePath) as db:
         await db.execute(
